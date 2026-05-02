@@ -1,0 +1,6 @@
+{
+  "plugin": [
+    "@opencode-ai/plugin@1.14.31",
+    "semver@7.6.3"
+  ]
+}

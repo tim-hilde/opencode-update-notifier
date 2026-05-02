@@ -29,7 +29,8 @@
     "test": "bun test",
     "lint": "biome check src test",
     "format": "biome check --write src test",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "smoke": "bun run build && bun run scripts/smoke.ts"
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1",

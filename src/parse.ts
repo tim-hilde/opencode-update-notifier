@@ -1,7 +1,7 @@
 import type { ParsedEntry } from "./types.ts";
 
-const SCOPED_PINNED = /^(@[^/]+\/[^@]+)@([^@].*)$/;
-const UNSCOPED_PINNED = /^([^@/][^@]*)@([^@].*)$/;
+const SCOPED_PINNED = /^(@[^/]+\/[^@]+)@(\d[^@]*)$/;
+const UNSCOPED_PINNED = /^([^@/][^@]*)@(\d[^@]*)$/;
 
 /**
  * Parses a single raw plugin entry string.

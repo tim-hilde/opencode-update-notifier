@@ -47,6 +47,14 @@ describe("parseEntry", () => {
   test("bare @scope without package name returns null", () => {
     expect(parseEntry("@scope")).toBeNull();
   });
+
+  test("git URL version returns null", () => {
+    expect(parseEntry("superpowers@git+https://github.com/obra/superpowers.git#v5.0.7")).toBeNull();
+  });
+
+  test("scoped git URL version returns null", () => {
+    expect(parseEntry("@scope/pkg@git+https://github.com/example/repo.git")).toBeNull();
+  });
 });
 
 describe("parseEntries", () => {
