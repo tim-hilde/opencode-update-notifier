@@ -1,0 +1,44 @@
+{
+  "name": "opencode-update-notifier",
+  "version": "0.0.0",
+  "description": "OpenCode plugin that notifies you when your installed plugins have newer versions on npm",
+  "keywords": ["opencode", "opencode-plugin", "plugin", "npm", "update-notifier"],
+  "author": "Tim Hildebrandt <44113468+tim-hilde@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": "github:tim-hilde/opencode-update-notifier",
+  "homepage": "https://github.com/tim-hilde/opencode-update-notifier",
+  "bugs": "https://github.com/tim-hilde/opencode-update-notifier/issues",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check src test",
+    "format": "biome check --write src test",
+    "release": "changeset publish"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1",
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.12",
+    "@opencode-ai/plugin": "^1.14.31",
+    "@types/semver": "^7.5.8",
+    "lefthook": "^1.11.13",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  }
+}
