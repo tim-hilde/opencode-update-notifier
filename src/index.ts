@@ -44,9 +44,13 @@ function makeLogger(client: PluginInput["client"]) {
 
 export const OpencodeUpdateNotifier: Plugin = async (
   input: PluginInput,
+  // Options are intentionally unused — no configurable options in this release.
   _options?: PluginOptions,
   _internal?: InternalDeps,
 ) => {
+  // hasRun is set before the try block: if the check fails on the first run,
+  // we intentionally do NOT retry on subsequent events. The plugin is "run once
+  // per lifecycle, fail silently" by design.
   let hasRun = false;
   const log = makeLogger(input.client);
 
@@ -68,7 +72,11 @@ export const OpencodeUpdateNotifier: Plugin = async (
           ...getCustomDirSources({ fsReader, fsExists, env }),
           getCustomConfigSource({ fsReader, fsExists, env }),
           getInlineConfigSource({ env }),
-          ...getProjectConfigSources({ fsReader, fsExists, startDir: input.worktree }),
+          ...getProjectConfigSources({
+            fsReader,
+            fsExists,
+            startDir: input.worktree || input.directory,
+          }),
           ...getManagedConfigSources({
             fsReader,
             fsExists,
@@ -120,7 +128,7 @@ export const OpencodeUpdateNotifier: Plugin = async (
           await notify({
             updates,
             showToast: async (toast) => {
-              await input.client.tui.showToast({ body: { ...toast } });
+              await input.client.tui.showToast({ body: toast });
             },
             log,
           });

@@ -83,6 +83,34 @@ describe("OpencodeUpdateNotifier plugin", () => {
     expect(checkCount).toBe(0);
   });
 
+  test("calls showToast when runCheck returns updates", async () => {
+    const toastCalls: unknown[] = [];
+    const showToastFn = async (args: unknown) => {
+      toastCalls.push(args);
+      return { data: true, error: null };
+    };
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient({ showToastFn }) as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async () => [{ name: "my-pkg", pinned: "1.0.0", latest: "2.0.0" }],
+      },
+    );
+
+    await fireSessionCreated(hooks);
+
+    expect(toastCalls).toHaveLength(1);
+  });
+
   test("does not throw when runCheck throws", async () => {
     const hooks = await OpencodeUpdateNotifier(
       {
