@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     biome-format:
-      glob: "*.{ts}"
+      glob: "**/*.{ts}"
       run: bunx biome check --write {staged_files}
       stage_fixed: true
     typecheck:
