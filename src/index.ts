@@ -17,7 +17,7 @@ import {
 import { notify } from "./notify.js";
 import { parseEntries } from "./parse.js";
 import { fetchLatest } from "./registry.js";
-import type { UpdateResult } from "./types.ts";
+import type { UpdateResult } from "./types.js";
 
 type InternalDeps = {
   _runCheck?: (deps: {
