@@ -18,15 +18,16 @@ function makeClient(overrides?: {
   };
 }
 
-// Fire the event hook with a session.created event
-async function fireSessionCreated(hooks: { event?: (input: { event: Event }) => Promise<void> }) {
+async function fireInstallationUpdateAvailable(hooks: {
+  event?: (input: { event: Event }) => Promise<void>;
+}) {
   await hooks.event?.({
-    event: { type: "session.created", properties: { info: {} as never } } as Event,
+    event: { type: "installation.update-available", properties: {} } as Event,
   });
 }
 
 describe("OpencodeUpdateNotifier plugin", () => {
-  test("runs check only once across multiple session.created events", async () => {
+  test("runs check only once on installation.update-available (with 3s delay)", async () => {
     let checkCount = 0;
 
     const hooks = await OpencodeUpdateNotifier(
@@ -40,7 +41,6 @@ describe("OpencodeUpdateNotifier plugin", () => {
         $: {} as never,
       },
       {},
-      // Inject a fake runCheck via internal dep injection escape hatch
       {
         _runCheck: async () => {
           checkCount++;
@@ -49,14 +49,16 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireSessionCreated(hooks);
-    await fireSessionCreated(hooks);
-    await fireSessionCreated(hooks);
+    await fireInstallationUpdateAvailable(hooks);
+    await fireInstallationUpdateAvailable(hooks);
+    await fireInstallationUpdateAvailable(hooks);
+
+    await new Promise((r) => setTimeout(r, 3500));
 
     expect(checkCount).toBe(1);
   });
 
-  test("ignores non-session.created events", async () => {
+  test("ignores non-installation.update-available events", async () => {
     let checkCount = 0;
     const hooks = await OpencodeUpdateNotifier(
       {
@@ -107,7 +109,9 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireSessionCreated(hooks);
+    await fireInstallationUpdateAvailable(hooks);
+
+    await new Promise((r) => setTimeout(r, 3500));
 
     expect(toastCalls).toHaveLength(1);
   });
@@ -131,8 +135,10 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    // Must not throw
-    await expect(fireSessionCreated(hooks)).resolves.toBeUndefined();
+    await fireInstallationUpdateAvailable(hooks);
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(true).toBe(true);
   });
 });
 

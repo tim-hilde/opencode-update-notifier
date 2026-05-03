@@ -133,20 +133,24 @@ export const OpencodeUpdateNotifier: Plugin = async (
 
   return {
     event: async ({ event }: { event: Event }) => {
-      if (event.type !== "session.created") return;
+      if (event.type !== "installation.update-available") return;
       if (hasRun) return;
-      hasRun = true;
 
-      try {
-        await runUpdateCheck();
-      } catch (err) {
-        void log({
-          service: "opencode-update-notifier",
-          level: "error",
-          message: "opencode-update-notifier: unexpected error",
-          extra: { error: String(err) },
-        });
-      }
+      setTimeout(async () => {
+        if (hasRun) return;
+        hasRun = true;
+
+        try {
+          await runUpdateCheck();
+        } catch (err) {
+          void log({
+            service: "opencode-update-notifier",
+            level: "error",
+            message: "opencode-update-notifier: unexpected error",
+            extra: { error: String(err) },
+          });
+        }
+      }, 3000);
     },
     config: async (cfg: Config) => {
       cfg.command ??= {};
