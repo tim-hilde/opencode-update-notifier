@@ -21,7 +21,7 @@ Add `opencode-update-notifier` to your OpenCode config:
 // ~/.config/opencode/opencode.json
 {
   "plugin": [
-    "opencode-update-notifier@latest"
+    "opencode-update-notifier@__VERSION__"
   ]
 }
 ```
