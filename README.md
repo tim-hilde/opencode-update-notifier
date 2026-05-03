@@ -33,7 +33,7 @@ Results are cached at `~/.cache/opencode-update-notifier/cache.json` (or `$XDG_C
 To force a fresh registry check, delete this file:
 
 ```sh
-rm ~/.cache/opencode-update-notifier/cache.json
+rm -f ~/.cache/opencode-update-notifier/cache.json
 ```
 
 ## How update detection works
