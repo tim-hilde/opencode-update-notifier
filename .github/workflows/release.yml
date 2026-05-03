@@ -40,7 +40,19 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: bun run release
+          createReleases: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update README with version
+        if: github.event_name == 'push' && contains(github.ref, 'main')
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/__VERSION__/$VERSION/g" README.md
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "chore: update README version to $VERSION" || true
+          git push
