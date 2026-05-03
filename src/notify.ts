@@ -8,17 +8,13 @@ export type ToastInput = {
 };
 
 export function formatToastMessage(updates: UpdateResult[]): string {
-  const inline = updates
-    .slice(0, 3)
-    .map((u) => `${u.name} ${u.pinned} → ${u.latest}`)
-    .join(", ");
+  const bullets = updates.map((u) => `- ${u.name} ${u.pinned} → ${u.latest}`).join("\n");
 
   if (updates.length === 1) {
-    return `Plugin update available: ${inline}`;
+    return `Plugin update available:\n${bullets}`;
   }
 
-  const suffix = updates.length > 3 ? `, +${updates.length - 3} more` : "";
-  return `${updates.length} plugin updates available: ${inline}${suffix}`;
+  return `${updates.length} plugin updates available:\n${bullets}`;
 }
 
 export async function notify(deps: {
@@ -30,7 +26,7 @@ export async function notify(deps: {
 
   const message = formatToastMessage(deps.updates);
 
-  await deps.showToast({ message, variant: "info" });
+  await deps.showToast({ message, variant: "info", duration: 10000 });
 
   try {
     await deps.log({
