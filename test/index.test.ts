@@ -136,6 +136,136 @@ describe("OpencodeUpdateNotifier plugin", () => {
   });
 });
 
+describe("slash command", () => {
+  test("command.execute.before runs check when command is check-updates", async () => {
+    let checkCalledWith: unknown = null;
+    const toastCalls: unknown[] = [];
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient({
+          showToastFn: async (args) => {
+            toastCalls.push(args);
+            return { data: true, error: null };
+          },
+        }) as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async (deps) => {
+          checkCalledWith = deps;
+          return [{ name: "pkg", pinned: "1.0.0", latest: "2.0.0" }];
+        },
+      },
+    );
+
+    await (
+      hooks as unknown as {
+        "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+      }
+    )["command.execute.before"]?.(
+      {
+        command: "check-updates",
+        sessionID: "s1",
+        arguments: "",
+      },
+      {},
+    );
+
+    expect(checkCalledWith).not.toBeNull();
+    expect((checkCalledWith as { forceRefresh?: boolean }).forceRefresh).toBe(true);
+    expect(toastCalls).toHaveLength(1);
+  });
+
+  test("command.execute.before ignores other commands", async () => {
+    let checkCalled = false;
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient() as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async () => {
+          checkCalled = true;
+          return [];
+        },
+      },
+    );
+
+    await (
+      hooks as unknown as {
+        "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+      }
+    )["command.execute.before"]?.(
+      {
+        command: "some-other-command",
+        sessionID: "s1",
+        arguments: "",
+      },
+      {},
+    );
+
+    expect(checkCalled).toBe(false);
+  });
+
+  test("command.execute.before logs errors without throwing", async () => {
+    const logCalls: unknown[] = [];
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient({
+          logFn: async (args) => {
+            logCalls.push(args);
+            return { data: true, error: null };
+          },
+        }) as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async () => {
+          throw new Error("registry down");
+        },
+      },
+    );
+
+    await expect(
+      (
+        hooks as unknown as {
+          "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+        }
+      )["command.execute.before"]?.(
+        {
+          command: "check-updates",
+          sessionID: "s1",
+          arguments: "",
+        },
+        {},
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(logCalls.length).toBeGreaterThan(0);
+  });
+});
+
 describe("config hook", () => {
   test("registers check-updates command", async () => {
     const hooks = await OpencodeUpdateNotifier(

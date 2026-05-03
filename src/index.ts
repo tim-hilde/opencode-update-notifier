@@ -28,6 +28,7 @@ type InternalDeps = {
     now: number;
     ttlMs: number;
     log: ReturnType<typeof makeLogger>;
+    forceRefresh?: boolean;
   }) => Promise<UpdateResult[]>;
 };
 
@@ -148,6 +149,84 @@ export const OpencodeUpdateNotifier: Plugin = async (
         description: "Check if your OpenCode plugins have newer versions available",
         template: "",
       };
+    },
+    "command.execute.before": async (
+      cmdInput: { command: string; sessionID: string; arguments: string },
+      _output: unknown,
+    ) => {
+      if (cmdInput.command !== "check-updates") return;
+
+      try {
+        const env = (k: string) => process.env[k];
+        const fsReader = (p: string) => readFileSync(p, "utf-8");
+        const fsExists = existsSync;
+        const homeDir = () => os.homedir();
+
+        const sources = [
+          ...getGlobalConfigSources({ fsReader, fsExists, homeDir, env }),
+          ...getCustomDirSources({ fsReader, fsExists, env }),
+          getCustomConfigSource({ fsReader, fsExists, env }),
+          getInlineConfigSource({ env }),
+          ...getProjectConfigSources({
+            fsReader,
+            fsExists,
+            startDir: input.worktree || input.directory,
+          }),
+          ...getManagedConfigSources({
+            fsReader,
+            fsExists,
+            platformPaths: getManagedPlatformPaths(env),
+          }),
+        ].filter((s): s is NonNullable<typeof s> => s !== null);
+
+        const rawEntries = loadPluginEntries({ sources, log });
+        const { parsed: entries } = parseEntries(rawEntries);
+
+        const doRunCheck = _internal?._runCheck ?? runCheck;
+
+        const updates = await doRunCheck({
+          entries,
+          fetchLatest: (name) => fetchLatest(name, { fetch: globalThis.fetch, timeoutMs: 5000 }),
+          readCache: () =>
+            readCache({
+              fsReader,
+              fsExists,
+              homeDir,
+              env,
+            }),
+          writeCache: (cache) =>
+            writeCache(
+              {
+                fsWriter: (p, content) => writeFileSync(p, content, "utf-8"),
+                fsRename: (from, to) => renameSync(from, to),
+                homeDir,
+                env,
+              },
+              cache,
+            ),
+          now: Date.now(),
+          ttlMs: CACHE_TTL_MS,
+          log,
+          forceRefresh: true,
+        });
+
+        if (updates.length > 0) {
+          await notify({
+            updates,
+            showToast: async (toast) => {
+              await input.client.tui.showToast({ body: toast });
+            },
+            log,
+          });
+        }
+      } catch (err) {
+        void log({
+          service: "opencode-update-notifier",
+          level: "error",
+          message: "opencode-update-notifier: /check-updates error",
+          extra: { error: String(err) },
+        });
+      }
     },
   };
 };
