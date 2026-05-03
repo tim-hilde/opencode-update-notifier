@@ -142,6 +142,15 @@ export const OpencodeUpdateNotifier: Plugin = async (
         });
       }
     },
+    config: async (cfg: {
+      command?: Record<string, { description?: string; template: string }>;
+    }) => {
+      cfg.command ??= {};
+      cfg.command["check-updates"] = {
+        description: "Check if your OpenCode plugins have newer versions available",
+        template: "",
+      };
+    },
   };
 };
 

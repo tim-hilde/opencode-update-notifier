@@ -134,3 +134,28 @@ describe("OpencodeUpdateNotifier plugin", () => {
     await expect(fireSessionCreated(hooks)).resolves.toBeUndefined();
   });
 });
+
+describe("config hook", () => {
+  test("registers check-updates command", async () => {
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient() as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+    );
+
+    const cfg: { command?: Record<string, { description?: string; template: string }> } = {};
+    await hooks.config?.(cfg as never);
+
+    expect(cfg.command?.["check-updates"]).toBeDefined();
+    expect(cfg.command?.["check-updates"]?.description).toBe(
+      "Check if your OpenCode plugins have newer versions available",
+    );
+  });
+});
