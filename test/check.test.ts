@@ -159,12 +159,15 @@ describe("runCheck", () => {
       registryCalled = true;
       return "4.0.0";
     };
+    let writtenCache: Cache | null = null;
 
     const results = await runCheck({
       entries,
       fetchLatest,
       readCache: () => initialCache,
-      writeCache: () => {},
+      writeCache: (c) => {
+        writtenCache = c;
+      },
       now: NOW,
       ttlMs: TTL_MS,
       log: noopLog,
@@ -173,5 +176,6 @@ describe("runCheck", () => {
 
     expect(registryCalled).toBe(true);
     expect(results).toEqual([{ name: "cached-pkg", pinned: "1.0.0", latest: "4.0.0" }]);
+    expect(writtenCache?.entries["cached-pkg"]?.latest).toBe("4.0.0");
   });
 });
