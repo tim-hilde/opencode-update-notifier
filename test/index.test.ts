@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { Config } from "@opencode-ai/plugin";
 import type { Event } from "@opencode-ai/sdk";
 import { OpencodeUpdateNotifier } from "../src/index.ts";
 
@@ -150,12 +151,13 @@ describe("config hook", () => {
       {},
     );
 
-    const cfg: { command?: Record<string, { description?: string; template: string }> } = {};
-    await hooks.config?.(cfg as never);
+    const cfg: Config = {};
+    await hooks.config?.(cfg);
 
     expect(cfg.command?.["check-updates"]).toBeDefined();
     expect(cfg.command?.["check-updates"]?.description).toBe(
       "Check if your OpenCode plugins have newer versions available",
     );
+    expect(cfg.command?.["check-updates"]?.template).toBe("");
   });
 });

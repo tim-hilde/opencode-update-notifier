@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import os from "node:os";
-import type { Plugin, PluginInput, PluginOptions } from "@opencode-ai/plugin";
+import type { Config, Plugin, PluginInput, PluginOptions } from "@opencode-ai/plugin";
 import type { Event } from "@opencode-ai/sdk";
 import { CACHE_TTL_MS, readCache, writeCache } from "./cache.js";
 import { runCheck } from "./check.js";
@@ -142,9 +142,7 @@ export const OpencodeUpdateNotifier: Plugin = async (
         });
       }
     },
-    config: async (cfg: {
-      command?: Record<string, { description?: string; template: string }>;
-    }) => {
+    config: async (cfg: Config) => {
       cfg.command ??= {};
       cfg.command["check-updates"] = {
         description: "Check if your OpenCode plugins have newer versions available",
