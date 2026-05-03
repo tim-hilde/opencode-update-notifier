@@ -147,4 +147,31 @@ describe("runCheck", () => {
     });
     expect(results).toHaveLength(0);
   });
+
+  test("forceRefresh: true bypasses cache even when entry is fresh", async () => {
+    const entries: ParsedEntry[] = [{ name: "cached-pkg", version: "1.0.0" }];
+    const initialCache: Cache = {
+      version: 1,
+      entries: { "cached-pkg": { latest: "3.0.0", fetchedAt: NOW - 1000 } }, // fresh entry
+    };
+    let registryCalled = false;
+    const fetchLatest = async (_name: string) => {
+      registryCalled = true;
+      return "4.0.0";
+    };
+
+    const results = await runCheck({
+      entries,
+      fetchLatest,
+      readCache: () => initialCache,
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+      forceRefresh: true,
+    });
+
+    expect(registryCalled).toBe(true);
+    expect(results).toEqual([{ name: "cached-pkg", pinned: "1.0.0", latest: "4.0.0" }]);
+  });
 });

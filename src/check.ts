@@ -10,6 +10,7 @@ export async function runCheck(deps: {
   now: number;
   ttlMs: number;
   log: Logger;
+  forceRefresh?: boolean;
 }): Promise<UpdateResult[]> {
   if (deps.entries.length === 0) return [];
 
@@ -33,7 +34,7 @@ export async function runCheck(deps: {
   const cachedLatest = new Map<string, string>();
 
   for (const name of names) {
-    const fresh = getEntry(cache, name, deps.now, deps.ttlMs);
+    const fresh = deps.forceRefresh ? null : getEntry(cache, name, deps.now, deps.ttlMs);
     if (fresh !== null) {
       cachedLatest.set(name, fresh);
     } else {
