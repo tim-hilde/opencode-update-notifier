@@ -1,8 +1,14 @@
 {
   "name": "opencode-update-notifier",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "OpenCode plugin that notifies you when your installed plugins have newer versions on npm",
-  "keywords": ["opencode", "opencode-plugin", "plugin", "npm", "update-notifier"],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "plugin",
+    "npm",
+    "update-notifier"
+  ],
   "author": "Tim Hildebrandt <44113468+tim-hilde@users.noreply.github.com>",
   "license": "MIT",
   "repository": "github:tim-hilde/opencode-update-notifier",
@@ -19,7 +25,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18"
   },
