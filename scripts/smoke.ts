@@ -1,14 +1,15 @@
 /**
  * Smoke test for the opencode-update-notifier plugin.
  *
- * Runs the plugin end-to-end against the real npm registry (with caching)
- * without requiring a running OpenCode instance.
+ * Runs the plugin end-to-end against the real npm registry and GitHub API
+ * (with caching) without requiring a running OpenCode instance.
  *
  * Usage:
  *   bun run smoke
  *
- * The fixture opencode.json at scripts/fixtures/opencode.json contains two
- * deliberately stale pinned entries so the plugin has something to report.
+ * The fixture opencode.json at scripts/fixtures/opencode.json contains
+ * deliberately stale npm-pinned and git-pinned entries so the plugin has
+ * something to report for both sources.
  * Edit it to test other scenarios.
  */
 import path from "node:path";
@@ -55,10 +56,13 @@ const hooks = await plugin(
   {},
 );
 
-// Fire session.created
+// Fire installation.update-available (the event the plugin listens on)
 await hooks.event?.({
-  event: { type: "session.created", properties: { info: {} as never } } as Event,
+  event: { type: "installation.update-available", properties: {} as never } as Event,
 });
+
+// The plugin delays 3s before running the check; wait for it to complete
+await new Promise((resolve) => setTimeout(resolve, 5000));
 
 console.log("=== Log calls ===");
 for (const entry of logCalls) {
@@ -77,12 +81,23 @@ if (toastCalls.length === 0) {
 console.log("\n=== Summary ===");
 console.log(`Logs: ${logCalls.length}, Toasts: ${toastCalls.length}`);
 
-if (toastCalls.length > 0) {
-  console.log("\nSMOKE TEST PASSED — toast was sent.");
-  process.exit(0);
-} else {
+const allToastText = toastCalls.map((t) => t.message).join("\n");
+const hasNpmUpdate = toastCalls.length > 0;
+const hasGitUpdate = allToastText.includes("(git):");
+
+if (!hasNpmUpdate) {
   console.log(
-    "\nNo toast sent. Check that scripts/fixtures/opencode.json has stale pinned entries.",
+    "\nFAILED — No toast sent. Check that scripts/fixtures/opencode.json has stale pinned entries.",
   );
   process.exit(1);
 }
+
+if (!hasGitUpdate) {
+  console.log(
+    "\nFAILED — No git update in toast. Check that the fixture has a stale git-pinned entry and that the GitHub API is reachable.",
+  );
+  console.log(`Toast content:\n${allToastText}`);
+  process.exit(1);
+}
+
+console.log("\nSMOKE TEST PASSED — npm and git updates both reported.");

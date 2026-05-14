@@ -272,6 +272,129 @@ describe("slash command", () => {
   });
 });
 
+describe("fetchLatestGithubTag wiring", () => {
+  test("end-to-end with git plugin entry: toast contains git update line", async () => {
+    const toastCalls: Array<{ body: { message: string } }> = [];
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient({
+          showToastFn: async (args: unknown) => {
+            toastCalls.push(args as { body: { message: string } });
+            return { data: true, error: null };
+          },
+        }) as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async (_deps) => [
+          {
+            source: "git-github" as const,
+            name: "superpowers",
+            owner: "obra",
+            repo: "superpowers",
+            pinned: "5.1.0",
+            latest: "5.2.0",
+          },
+        ],
+      },
+    );
+
+    await (
+      hooks as unknown as {
+        "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+      }
+    )["command.execute.before"]?.({ command: "check-updates", sessionID: "s1", arguments: "" }, {});
+
+    expect(toastCalls).toHaveLength(1);
+    const msg = (toastCalls[0] as { body: { message: string } }).body.message;
+    expect(msg).toContain("superpowers (git): 5.1.0 → 5.2.0");
+  });
+
+  test("_runCheck receives fetchLatestGithubTag in deps", async () => {
+    let receivedFetchLatestGithubTag: unknown = undefined;
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient() as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async (deps) => {
+          receivedFetchLatestGithubTag = deps.fetchLatestGithubTag;
+          return [];
+        },
+      },
+    );
+
+    await (
+      hooks as unknown as {
+        "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+      }
+    )["command.execute.before"]?.({ command: "check-updates", sessionID: "s1", arguments: "" }, {});
+
+    expect(typeof receivedFetchLatestGithubTag).toBe("function");
+  });
+
+  test("mixed npm + git: toast contains both update lines", async () => {
+    const toastCalls: Array<{ body: { message: string } }> = [];
+
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient({
+          showToastFn: async (args: unknown) => {
+            toastCalls.push(args as { body: { message: string } });
+            return { data: true, error: null };
+          },
+        }) as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async (_deps) => [
+          { source: "npm" as const, name: "my-npm-pkg", pinned: "1.0.0", latest: "1.1.0" },
+          {
+            source: "git-github" as const,
+            name: "superpowers",
+            owner: "obra",
+            repo: "superpowers",
+            pinned: "5.1.0",
+            latest: "5.2.0",
+          },
+        ],
+      },
+    );
+
+    await (
+      hooks as unknown as {
+        "command.execute.before"?: (input: unknown, output: unknown) => Promise<void>;
+      }
+    )["command.execute.before"]?.({ command: "check-updates", sessionID: "s1", arguments: "" }, {});
+
+    expect(toastCalls).toHaveLength(1);
+    const msg = (toastCalls[0] as { body: { message: string } }).body.message;
+    expect(msg).toContain("my-npm-pkg: 1.0.0 → 1.1.0");
+    expect(msg).toContain("superpowers (git): 5.1.0 → 5.2.0");
+  });
+});
+
 describe("config hook", () => {
   test("registers check-updates command", async () => {
     const hooks = await OpencodeUpdateNotifier(

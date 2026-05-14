@@ -1,15 +1,25 @@
 /** A plugin entry that has been successfully parsed. */
-export type ParsedEntry = {
-  name: string;
-  version: string;
-};
+export type ParsedEntry =
+  | { source: "npm"; name: string; version: string }
+  | { source: "git-github"; name: string; owner: string; repo: string; version: string };
 
 /** One plugin that has a newer version available. */
-export type UpdateResult = {
-  name: string;
-  pinned: string;
-  latest: string;
-};
+export type UpdateResult =
+  | { source: "npm"; name: string; pinned: string; latest: string }
+  | {
+      source: "git-github";
+      name: string;
+      owner: string;
+      repo: string;
+      pinned: string;
+      latest: string;
+    };
+
+/** Reason a raw plugin entry was dropped by the parser. */
+export type DropReason = "unpinned-or-malformed" | "unsupported-git-host" | "git-ref-not-semver";
+
+/** A raw plugin entry that could not be parsed, with a reason tag. */
+export type DroppedEntry = { raw: string; reason: DropReason };
 
 /** Persisted cache file schema. */
 export type CacheEntry = {
@@ -18,8 +28,11 @@ export type CacheEntry = {
 };
 
 export type Cache = {
-  version: 1;
-  entries: Record<string, CacheEntry>;
+  version: 2;
+  entries: {
+    npm: Record<string, CacheEntry>; // key: package name
+    "git-github": Record<string, CacheEntry>; // key: "owner/repo"
+  };
 };
 
 // --- Dependency interfaces ---
