@@ -15,6 +15,9 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
 
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +40,7 @@ jobs:
         run: bun run build
 
       - name: Create Release PR or Publish to npm
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: bun run release
@@ -46,13 +50,32 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Update README with version
-        if: github.event_name == 'push' && contains(github.ref, 'main')
+  update-readme:
+    name: Update README version
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Replace version in README
+        id: replace
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          sed -i "s/__VERSION__/$VERSION/g" README.md
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add README.md
-          git commit -m "chore: update README version to $VERSION" || true
-          git push
+          sed -i -E "s|(opencode-update-notifier@)[^\"]+(\"|\`)|\1$VERSION\2|g" README.md
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update README version to ${{ steps.replace.outputs.version }}"
+          title: "chore: update README version to ${{ steps.replace.outputs.version }}"
+          body: "Automated: bump pinned version in README to `${{ steps.replace.outputs.version }}` to match the published package."
+          branch: "chore/readme-version-${{ steps.replace.outputs.version }}"
+          delete-branch: true
+          base: main
+          labels: "auto-merge"
