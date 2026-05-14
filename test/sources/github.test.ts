@@ -85,6 +85,19 @@ describe("fetchLatestGithubTag", () => {
     ).rejects.toThrow();
   });
 
+  test("non-array response body throws", async () => {
+    const mockFetch = () =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ message: "not an array" }),
+      } as unknown as Response);
+
+    await expect(
+      fetchLatestGithubTag("owner", "repo", { fetch: mockFetch, timeoutMs: 1000 }),
+    ).rejects.toThrow();
+  });
+
   test("throws when all tags are non-semver", async () => {
     const tags: TagObject[] = [{ name: "latest" }, { name: "stable" }];
     await expect(
