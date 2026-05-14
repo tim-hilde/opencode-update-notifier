@@ -50,6 +50,7 @@ describe("fetchLatestGithubTag", () => {
       { name: "random-tag" },
       { name: "latest" },
       { name: "v2.0.0" },
+      { name: "20240514" },
     ];
     const result = await fetchLatestGithubTag("owner", "repo", {
       fetch: makeFetch(200, tags),
@@ -95,6 +96,13 @@ describe("fetchLatestGithubTag", () => {
 
     await expect(
       fetchLatestGithubTag("owner", "repo", { fetch: mockFetch, timeoutMs: 1000 }),
+    ).rejects.toThrow();
+  });
+
+  test("CalVer tags are not treated as valid semver", async () => {
+    const tags: TagObject[] = [{ name: "20240514" }, { name: "release-2024-05" }];
+    await expect(
+      fetchLatestGithubTag("owner", "repo", { fetch: makeFetch(200, tags), timeoutMs: 5000 }),
     ).rejects.toThrow();
   });
 

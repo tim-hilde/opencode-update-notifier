@@ -24,15 +24,16 @@ export async function fetchLatestGithubTag(
     throw new Error(`fetchLatestGithubTag(${owner}/${repo}): response is not an array`);
   }
 
-  const versions = (body as { name: string }[])
-    .map((tag) => semver.coerce(tag.name))
-    .filter((v): v is semver.SemVer => v !== null);
+  const versions = (body as { name: string }[]).flatMap((tag) => {
+    const stripped = tag.name.startsWith("v") ? tag.name.slice(1) : tag.name;
+    const parsed = semver.valid(stripped) ? semver.parse(stripped) : null;
+    return parsed ? [parsed] : [];
+  });
 
   if (versions.length === 0) {
     throw new Error(`fetchLatestGithubTag(${owner}/${repo}): no valid semver tags found`);
   }
 
   versions.sort(semver.rcompare);
-  // Safe: versions.length === 0 is guarded above
   return (versions[0] as semver.SemVer).version;
 }

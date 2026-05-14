@@ -61,10 +61,3 @@ export type RegistryFetcher = (
   name: string,
   opts: { fetch: typeof globalThis.fetch; timeoutMs: number },
 ) => Promise<string>;
-
-/** Fetches the latest SemVer tag from a GitHub repo. */
-export type GithubTagFetcher = (
-  owner: string,
-  repo: string,
-  opts: { fetch: typeof globalThis.fetch; timeoutMs: number },
-) => Promise<string>;
