@@ -1,11 +1,11 @@
 /** A plugin entry that has been successfully parsed. */
-export type ParsedEntry = {
-  name: string;
-  version: string;
-};
+export type ParsedEntry =
+  | { source: "npm"; name: string; version: string }
+  | { source: "git-github"; name: string; owner: string; repo: string; version: string };
 
 /** One plugin that has a newer version available. */
 export type UpdateResult = {
+  source: "npm" | "git-github";
   name: string;
   pinned: string;
   latest: string;
@@ -18,8 +18,11 @@ export type CacheEntry = {
 };
 
 export type Cache = {
-  version: 1;
-  entries: Record<string, CacheEntry>;
+  version: 2;
+  entries: {
+    npm: Record<string, CacheEntry>;
+    "git-github": Record<string, CacheEntry>;
+  };
 };
 
 // --- Dependency interfaces ---
@@ -56,5 +59,12 @@ export type Logger = (entry: {
 /** Fetches the latest published version of an npm package. */
 export type RegistryFetcher = (
   name: string,
+  opts: { fetch: typeof globalThis.fetch; timeoutMs: number },
+) => Promise<string>;
+
+/** Fetches the latest SemVer tag from a GitHub repo. */
+export type GithubTagFetcher = (
+  owner: string,
+  repo: string,
   opts: { fetch: typeof globalThis.fetch; timeoutMs: number },
 ) => Promise<string>;
