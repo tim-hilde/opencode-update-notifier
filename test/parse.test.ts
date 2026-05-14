@@ -138,6 +138,18 @@ describe("parseEntry", () => {
   test("scoped git URL without ref returns null", () => {
     expect(parseEntry("@scope/pkg@git+https://github.com/example/repo.git")).toBeNull();
   });
+
+  test("git URL with v-prefixed SHA-like ref returns null", () => {
+    expect(parseEntry("pkg@git+https://github.com/owner/repo.git#vabc1234")).toBeNull();
+  });
+
+  test("git URL with bare v-prefix returns null", () => {
+    expect(parseEntry("pkg@git+https://github.com/owner/repo.git#v")).toBeNull();
+  });
+
+  test("git URL with date-based v-prefixed tag returns null", () => {
+    expect(parseEntry("pkg@git+https://github.com/owner/repo.git#v20230101")).toBeNull();
+  });
 });
 
 describe("parseEntries", () => {
@@ -159,5 +171,18 @@ describe("parseEntries", () => {
     const result = parseEntries([]);
     expect(result.parsed).toEqual([]);
     expect(result.dropped).toEqual([]);
+  });
+
+  test("includes git-github entries in parsed, not dropped", () => {
+    const result = parseEntries([
+      "my-tool@3.0.0",
+      "superpowers@git+https://github.com/obra/superpowers.git#v5.1.0",
+      "unpinned-pkg",
+    ]);
+    expect(result.parsed).toEqual([
+      { source: "npm", name: "my-tool", version: "3.0.0" },
+      { source: "git-github", name: "superpowers", owner: "obra", repo: "superpowers", version: "5.1.0" },
+    ]);
+    expect(result.dropped).toEqual(["unpinned-pkg"]);
   });
 });

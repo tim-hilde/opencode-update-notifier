@@ -5,7 +5,14 @@ const GIT_GITHUB =
   /^(@[^/]+\/[^@]+|[^@/][^@]*)@git\+https:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?#(.+)$/;
 const SCOPED_PINNED = /^(@[^/]+\/[^@]+)@(\d[^@]*)$/;
 const UNSCOPED_PINNED = /^([^@/][^@]*)@(\d[^@]*)$/;
+const PARTIAL_SEMVER = /^\d{1,4}(\.\d{1,4})?$/;
 
+/**
+ * Parses a single raw plugin entry string.
+ * Returns a ParsedEntry for pinned npm entries (name@version) and
+ * GitHub git-pinned entries (name@git+https://github.com/owner/repo[.git]#vX.Y.Z).
+ * Returns null for anything else (unpinned, non-GitHub git URL, non-semver ref, local path, malformed).
+ */
 export function parseEntry(raw: string): ParsedEntry | null {
   let m = GIT_GITHUB.exec(raw);
   if (m) {
@@ -13,8 +20,10 @@ export function parseEntry(raw: string): ParsedEntry | null {
     // Only accept version refs starting with 'v' to exclude SHAs, branches, date tags
     if (!ref.startsWith("v")) return null;
     const stripped = ref.slice(1);
-    // Prefer exact semver (preserves pre-release); fall back to coerce for partial (v5, v5.1)
-    const version = semverValid(stripped) ?? semverCoerce(stripped)?.version;
+    // Prefer exact semver (preserves pre-release); fall back to coerce only for MAJOR or MAJOR.MINOR
+    const version =
+      semverValid(stripped) ??
+      (PARTIAL_SEMVER.test(stripped) ? (semverCoerce(stripped)?.version ?? null) : null);
     if (!version) return null;
     return {
       source: "git-github",
