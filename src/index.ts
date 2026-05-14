@@ -17,12 +17,14 @@ import {
 import { notify } from "./notify.js";
 import { parseEntries } from "./parse.js";
 import { fetchLatest } from "./registry.js";
+import { fetchLatestGithubTag } from "./sources/github.js";
 import type { UpdateResult } from "./types.js";
 
 type InternalDeps = {
   _runCheck?: (deps: {
     entries: ReturnType<typeof parseEntries>["parsed"];
     fetchLatest: (name: string) => Promise<string>;
+    fetchLatestGithubTag: (owner: string, repo: string) => Promise<string>;
     readCache: () => ReturnType<typeof readCache>;
     writeCache: (cache: ReturnType<typeof readCache>) => void;
     now: number;
@@ -97,6 +99,8 @@ export const OpencodeUpdateNotifier: Plugin = async (
     const updates = await doRunCheck({
       entries,
       fetchLatest: (name) => fetchLatest(name, { fetch: globalThis.fetch, timeoutMs: 5000 }),
+      fetchLatestGithubTag: (owner, repo) =>
+        fetchLatestGithubTag(owner, repo, { fetch: globalThis.fetch, timeoutMs: 5000 }),
       readCache: () =>
         readCache({
           fsReader,
