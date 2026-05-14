@@ -5,7 +5,7 @@ export type ParsedEntry =
 
 /** One plugin that has a newer version available. */
 export type UpdateResult = {
-  source: "npm" | "git-github";
+  source: ParsedEntry["source"];
   name: string;
   pinned: string;
   latest: string;
@@ -20,8 +20,8 @@ export type CacheEntry = {
 export type Cache = {
   version: 2;
   entries: {
-    npm: Record<string, CacheEntry>;
-    "git-github": Record<string, CacheEntry>;
+    npm: Record<string, CacheEntry>; // key: package name
+    "git-github": Record<string, CacheEntry>; // key: "owner/repo"
   };
 };
 
