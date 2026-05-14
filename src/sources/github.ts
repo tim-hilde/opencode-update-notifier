@@ -33,7 +33,6 @@ export async function fetchLatestGithubTag(
   }
 
   versions.sort(semver.rcompare);
-  const top = versions[0];
-  if (!top) throw new Error(`fetchLatestGithubTag(${owner}/${repo}): no valid semver tags found`);
-  return top.version;
+  // Safe: versions.length === 0 is guarded above
+  return (versions[0] as semver.SemVer).version;
 }
