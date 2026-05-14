@@ -12,15 +12,32 @@ permissions:
   id-token: write
 
 jobs:
-  release:
-    name: Release
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to npm
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -37,39 +54,17 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Check for pending changesets
-        id: changesets
-        run: |
-          count=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
-          echo "pending=$count" >> "$GITHUB_OUTPUT"
-          echo "Pending changesets: $count"
-
-      - name: Version bump + update README
-        if: steps.changesets.outputs.pending != '0'
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          bun run changeset version
-          VERSION=$(node -p "require('./package.json').version")
-          git add -A
-          git commit -m "chore: release v$VERSION"
-          git push
-
       - name: Publish to npm
-        if: steps.changesets.outputs.pending != '0'
         run: bun run release
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release
-        if: steps.changesets.outputs.pending != '0'
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          # Extract the section for this version from CHANGELOG.md
-          NOTES=$(awk "/^## $VERSION/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            --notes "${NOTES:-See CHANGELOG.md for details.}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update README version
+        run: node scripts/update-readme-version.js
+
+      - name: Commit updated README
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update README version to ${{ needs.release-please.outputs.tag_name }}"
+          branch: main
+          file_pattern: README.md
