@@ -30,9 +30,9 @@ describe("fetchLatestGithubTag", () => {
       return new Response(JSON.stringify([{ name: "v1.0.0" }]), { status: 200 });
     };
     await fetchLatestGithubTag("obra", "superpowers", { fetch: capturingFetch, timeoutMs: 5000 });
-    expect(capturedHeaders["Accept"]).toBe("application/vnd.github+json");
+    expect(capturedHeaders.Accept).toBe("application/vnd.github+json");
     expect(capturedHeaders["User-Agent"]).toBe("opencode-update-notifier");
-    expect(capturedHeaders["Authorization"]).toBeUndefined();
+    expect(capturedHeaders.Authorization).toBeUndefined();
   });
 
   test("returns highest semver tag", async () => {

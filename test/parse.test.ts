@@ -181,7 +181,13 @@ describe("parseEntries", () => {
     ]);
     expect(result.parsed).toEqual([
       { source: "npm", name: "my-tool", version: "3.0.0" },
-      { source: "git-github", name: "superpowers", owner: "obra", repo: "superpowers", version: "5.1.0" },
+      {
+        source: "git-github",
+        name: "superpowers",
+        owner: "obra",
+        repo: "superpowers",
+        version: "5.1.0",
+      },
     ]);
     expect(result.dropped).toEqual(["unpinned-pkg"]);
   });

@@ -155,7 +155,9 @@ describe("runCheck", () => {
       ttlMs: TTL_MS,
       log: noopLog,
     });
-    expect(results).toEqual([{ source: "npm", name: "good-pkg", pinned: "1.0.0", latest: "2.0.0" }]);
+    expect(results).toEqual([
+      { source: "npm", name: "good-pkg", pinned: "1.0.0", latest: "2.0.0" },
+    ]);
   });
 
   test("returns empty array when entries is empty", async () => {
@@ -213,7 +215,13 @@ describe("runCheck", () => {
 
   test("dispatches to fetchLatestGithubTag for git-github entries", async () => {
     const entries: ParsedEntry[] = [
-      { source: "git-github", name: "my-plugin", owner: "acme", repo: "my-plugin", version: "1.0.0" },
+      {
+        source: "git-github",
+        name: "my-plugin",
+        owner: "acme",
+        repo: "my-plugin",
+        version: "1.0.0",
+      },
     ];
     let githubArgs: [string, string] | null = null;
     const fetchLatestGithubTag = async (owner: string, repo: string) => {
@@ -247,7 +255,13 @@ describe("runCheck", () => {
   test("mixed entries: npm and git-github both fetched with correct dispatchers", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "gh-plugin", version: "1.0.0" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "gh-plugin",
+        version: "1.0.0",
+      },
     ];
     const npmCalls: string[] = [];
     const githubCalls: [string, string][] = [];
@@ -292,7 +306,13 @@ describe("runCheck", () => {
   test("cache bucket isolation: npm cache hit does not skip git-github fetch", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "gh-plugin", version: "1.0.0" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "gh-plugin",
+        version: "1.0.0",
+      },
     ];
     const hotCache: Cache = {
       version: 2,
@@ -330,7 +350,13 @@ describe("runCheck", () => {
   test("cache bucket isolation: git-github cache hit does not skip npm fetch", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "gh-plugin", version: "1.0.0" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "gh-plugin",
+        version: "1.0.0",
+      },
     ];
     const hotCache: Cache = {
       version: 2,
@@ -368,7 +394,13 @@ describe("runCheck", () => {
   test("forceRefresh bypasses both npm and git-github cache", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "gh-plugin", version: "1.0.0" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "gh-plugin",
+        version: "1.0.0",
+      },
     ];
     const hotCache: Cache = {
       version: 2,
@@ -432,7 +464,12 @@ describe("runCheck", () => {
 
     expect(warnLogged).toBe(true);
     expect(results).toHaveLength(1);
-    expect(results[0]).toEqual({ source: "npm", name: "npm-pkg", pinned: "1.0.0", latest: "2.0.0" });
+    expect(results[0]).toEqual({
+      source: "npm",
+      name: "npm-pkg",
+      pinned: "1.0.0",
+      latest: "2.0.0",
+    });
   });
 
   test("same owner/repo pinned differently: only highest pinned compared, no duplicate cache writes", async () => {
@@ -469,8 +506,20 @@ describe("runCheck", () => {
 
   test("name comes from max-version entry when two git-github entries share owner/repo", async () => {
     const entries: ParsedEntry[] = [
-      { source: "git-github", name: "name-from-lower", owner: "org", repo: "plugin", version: "1.0.0" },
-      { source: "git-github", name: "name-from-higher", owner: "org", repo: "plugin", version: "2.0.0" },
+      {
+        source: "git-github",
+        name: "name-from-lower",
+        owner: "org",
+        repo: "plugin",
+        version: "1.0.0",
+      },
+      {
+        source: "git-github",
+        name: "name-from-higher",
+        owner: "org",
+        repo: "plugin",
+        version: "2.0.0",
+      },
     ];
     const results = await runCheck({
       entries,

@@ -6,7 +6,9 @@ const noopLog: Logger = async () => {};
 
 describe("formatToastMessage", () => {
   test("single update", () => {
-    const updates: UpdateResult[] = [{ source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }];
+    const updates: UpdateResult[] = [
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+    ];
     expect(formatToastMessage(updates)).toBe("Plugin update available:\n- pkg-a 1.0.0 → 2.0.0");
   });
 

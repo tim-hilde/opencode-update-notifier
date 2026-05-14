@@ -53,8 +53,7 @@ describe("readCache", () => {
 
   test("returns empty cache when npm bucket is an array", () => {
     const result = readCache({
-      fsReader: () =>
-        JSON.stringify({ version: 2, entries: { npm: [], "git-github": {} } }),
+      fsReader: () => JSON.stringify({ version: 2, entries: { npm: [], "git-github": {} } }),
       fsExists: () => true,
       homeDir: () => "/home/user",
       env: () => undefined,
