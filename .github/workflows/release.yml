@@ -12,32 +12,15 @@ permissions:
   id-token: write
 
 jobs:
-  release-please:
-    name: Release Please
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-
-    steps:
-      - uses: googleapis/release-please-action@v4
-        id: release
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish:
-    name: Publish to npm
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+  release:
+    name: Release
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -54,17 +37,9 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Publish to npm
-        run: bun run release
+      - name: Release
+        run: bunx semantic-release
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Update README version
-        run: node scripts/update-readme-version.js
-
-      - name: Commit updated README
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update README version to ${{ needs.release-please.outputs.tag_name }}"
-          branch: main
-          file_pattern: README.md
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
