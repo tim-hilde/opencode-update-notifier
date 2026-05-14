@@ -35,8 +35,10 @@ export function readCache(deps: {
       entries === null ||
       typeof entries.npm !== "object" ||
       entries.npm === null ||
+      Array.isArray(entries.npm) ||
       typeof entries["git-github"] !== "object" ||
-      entries["git-github"] === null
+      entries["git-github"] === null ||
+      Array.isArray(entries["git-github"])
     ) {
       return structuredClone(EMPTY_CACHE);
     }

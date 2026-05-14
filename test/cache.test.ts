@@ -51,6 +51,17 @@ describe("readCache", () => {
     expect(result).toEqual(EMPTY_CACHE);
   });
 
+  test("returns empty cache when npm bucket is an array", () => {
+    const result = readCache({
+      fsReader: () =>
+        JSON.stringify({ version: 2, entries: { npm: [], "git-github": {} } }),
+      fsExists: () => true,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(result).toEqual({ version: 2, entries: { npm: {}, "git-github": {} } });
+  });
+
   test("returns parsed v2 cache intact with both buckets preserved", () => {
     const stored: Cache = {
       version: 2,
