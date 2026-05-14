@@ -39,6 +39,7 @@
     "test": "bun test",
     "lint": "biome check src test",
     "format": "biome check --write src test",
+    "version": "node scripts/update-readme-version.js",
     "release": "changeset publish",
     "smoke": "bun run build && bun run scripts/smoke.ts"
   },
