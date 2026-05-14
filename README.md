@@ -48,7 +48,11 @@ rm -f ~/.cache/opencode-update-notifier/cache.json
 
 ## How update detection works
 
-Only **pinned** plugin entries are checked — entries in the format `@scope/name@version` or `name@version`. Unpinned entries (e.g. `my-plugin` or `./local-plugin`) are silently ignored.
+Only **pinned** plugin entries are checked:
+- npm-pinned entries: `@scope/name@version` or `name@version`
+- GitHub git-pinned entries: `name@git+https://github.com/<owner>/<repo>[.git]#vX.Y.Z`
+
+Unpinned entries (e.g. `my-plugin` or `./local-plugin`), non-GitHub git URLs, and git refs that aren't SemVer versions are silently ignored.
 
 ## License
 
