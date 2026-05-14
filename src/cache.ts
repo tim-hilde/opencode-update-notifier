@@ -16,36 +16,61 @@ export function readCache(deps: {
   fsExists: FsExists;
   homeDir: HomeDir;
   env: EnvReader;
+  /**
+   * Optional. When provided, readCache will rewrite the cache file to v2
+   * EMPTY_CACHE if it detects a recognizable older-version file on disk.
+   * This prevents repeated parse-then-discard on every run after an upgrade.
+   * Best-effort: any write failure is swallowed.
+   */
+  fsWriter?: FsWriter;
+  fsRename?: FsRename;
 }): Cache {
   const p = cachePath(deps.env, deps.homeDir);
+  let parsed: unknown;
   try {
     const raw = deps.fsReader(p);
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      (parsed as Record<string, unknown>).version !== 2
-    ) {
-      return structuredClone(EMPTY_CACHE);
-    }
-    const obj = parsed as Record<string, unknown>;
-    const entries = obj.entries as Record<string, unknown> | undefined;
-    if (
-      typeof entries !== "object" ||
-      entries === null ||
-      typeof entries.npm !== "object" ||
-      entries.npm === null ||
-      Array.isArray(entries.npm) ||
-      typeof entries["git-github"] !== "object" ||
-      entries["git-github"] === null ||
-      Array.isArray(entries["git-github"])
-    ) {
-      return structuredClone(EMPTY_CACHE);
-    }
-    return parsed as Cache;
+    parsed = JSON.parse(raw);
   } catch {
     return structuredClone(EMPTY_CACHE);
   }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return structuredClone(EMPTY_CACHE);
+  }
+
+  const versionRaw = (parsed as Record<string, unknown>).version;
+  if (versionRaw !== 2) {
+    // Recognizable older numeric version on disk -> normalize it on disk so
+    // subsequent runs short-circuit on the version check. Unknown shapes
+    // (no numeric version) we leave alone.
+    if (typeof versionRaw === "number" && deps.fsWriter && deps.fsRename) {
+      writeCache(
+        {
+          fsWriter: deps.fsWriter,
+          fsRename: deps.fsRename,
+          homeDir: deps.homeDir,
+          env: deps.env,
+        },
+        EMPTY_CACHE,
+      );
+    }
+    return structuredClone(EMPTY_CACHE);
+  }
+
+  const entries = (parsed as { entries?: unknown }).entries as Record<string, unknown> | undefined;
+  if (
+    typeof entries !== "object" ||
+    entries === null ||
+    typeof entries.npm !== "object" ||
+    entries.npm === null ||
+    Array.isArray(entries.npm) ||
+    typeof entries["git-github"] !== "object" ||
+    entries["git-github"] === null ||
+    Array.isArray(entries["git-github"])
+  ) {
+    return structuredClone(EMPTY_CACHE);
+  }
+  return parsed as Cache;
 }
 
 export function getEntry(

@@ -248,7 +248,14 @@ describe("runCheck", () => {
     expect(npmCalled).toBe(false);
     expect(githubArgs).toEqual(["acme", "my-plugin"]);
     expect(results).toEqual([
-      { source: "git-github", name: "my-plugin", pinned: "1.0.0", latest: "2.0.0" },
+      {
+        source: "git-github",
+        name: "my-plugin",
+        owner: "acme",
+        repo: "my-plugin",
+        pinned: "1.0.0",
+        latest: "2.0.0",
+      },
     ]);
   });
 
@@ -298,6 +305,8 @@ describe("runCheck", () => {
     expect(results.find((r) => r.source === "git-github")).toEqual({
       source: "git-github",
       name: "gh-plugin",
+      owner: "org",
+      repo: "gh-plugin",
       pinned: "1.0.0",
       latest: "3.0.0",
     });

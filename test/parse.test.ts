@@ -164,7 +164,10 @@ describe("parseEntries", () => {
       { source: "npm", name: "@scope/pkg", version: "1.0.0" },
       { source: "npm", name: "my-tool", version: "3.0.0" },
     ]);
-    expect(result.dropped).toEqual(["unpinned-pkg", "./local-plugin"]);
+    expect(result.dropped).toEqual([
+      { raw: "unpinned-pkg", reason: "unpinned-or-malformed" },
+      { raw: "./local-plugin", reason: "unpinned-or-malformed" },
+    ]);
   });
 
   test("empty input", () => {
@@ -189,6 +192,30 @@ describe("parseEntries", () => {
         version: "5.1.0",
       },
     ]);
-    expect(result.dropped).toEqual(["unpinned-pkg"]);
+    expect(result.dropped).toEqual([{ raw: "unpinned-pkg", reason: "unpinned-or-malformed" }]);
+  });
+
+  test("non-github git URL is dropped with unsupported-git-host reason", () => {
+    const result = parseEntries([
+      "pkg@git+https://gitlab.com/owner/repo.git#v1.0.0",
+      "@scope/p@git+https://bitbucket.org/o/r#v2.0.0",
+    ]);
+    expect(result.parsed).toEqual([]);
+    expect(result.dropped).toEqual([
+      { raw: "pkg@git+https://gitlab.com/owner/repo.git#v1.0.0", reason: "unsupported-git-host" },
+      { raw: "@scope/p@git+https://bitbucket.org/o/r#v2.0.0", reason: "unsupported-git-host" },
+    ]);
+  });
+
+  test("github git URL with non-semver ref is dropped with git-ref-not-semver reason", () => {
+    const result = parseEntries([
+      "pkg@git+https://github.com/owner/repo.git#main",
+      "pkg@git+https://github.com/owner/repo.git#abc1234",
+    ]);
+    expect(result.parsed).toEqual([]);
+    expect(result.dropped).toEqual([
+      { raw: "pkg@git+https://github.com/owner/repo.git#main", reason: "git-ref-not-semver" },
+      { raw: "pkg@git+https://github.com/owner/repo.git#abc1234", reason: "git-ref-not-semver" },
+    ]);
   });
 });

@@ -294,7 +294,14 @@ describe("fetchLatestGithubTag wiring", () => {
       {},
       {
         _runCheck: async (_deps) => [
-          { source: "git-github" as const, name: "superpowers", pinned: "5.1.0", latest: "5.2.0" },
+          {
+            source: "git-github" as const,
+            name: "superpowers",
+            owner: "obra",
+            repo: "superpowers",
+            pinned: "5.1.0",
+            latest: "5.2.0",
+          },
         ],
       },
     );
@@ -363,7 +370,14 @@ describe("fetchLatestGithubTag wiring", () => {
       {
         _runCheck: async (_deps) => [
           { source: "npm" as const, name: "my-npm-pkg", pinned: "1.0.0", latest: "1.1.0" },
-          { source: "git-github" as const, name: "superpowers", pinned: "5.1.0", latest: "5.2.0" },
+          {
+            source: "git-github" as const,
+            name: "superpowers",
+            owner: "obra",
+            repo: "superpowers",
+            pinned: "5.1.0",
+            latest: "5.2.0",
+          },
         ],
       },
     );
@@ -376,7 +390,7 @@ describe("fetchLatestGithubTag wiring", () => {
 
     expect(toastCalls).toHaveLength(1);
     const msg = (toastCalls[0] as { body: { message: string } }).body.message;
-    expect(msg).toContain("my-npm-pkg 1.0.0 → 1.1.0");
+    expect(msg).toContain("my-npm-pkg: 1.0.0 → 1.1.0");
     expect(msg).toContain("superpowers (git): 5.1.0 → 5.2.0");
   });
 });

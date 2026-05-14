@@ -2,16 +2,32 @@ import { gt as semverGt, maxSatisfying as semverMaxSatisfying } from "semver";
 import { getEntry, setEntry } from "./cache.js";
 import type { Cache, Logger, ParsedEntry, UpdateResult } from "./types.ts";
 
-type GroupKey = string; // "npm:name" or "git-github:owner/repo"
-
-function groupKey(entry: ParsedEntry): GroupKey {
-  if (entry.source === "npm") return `npm:${entry.name}`;
-  return `git-github:${entry.owner}/${entry.repo}`;
+/**
+ * Identity used as both the cache key within a source bucket and (combined
+ * with the source) the group key for deduplicating entries within a run.
+ * - npm: package name
+ * - git-github: "owner/repo"
+ */
+function entryId(entry: ParsedEntry): string {
+  return entry.source === "npm" ? entry.name : `${entry.owner}/${entry.repo}`;
 }
 
-function cacheKey(entry: ParsedEntry): string {
-  if (entry.source === "npm") return entry.name;
-  return `${entry.owner}/${entry.repo}`;
+function groupKey(entry: ParsedEntry): string {
+  return `${entry.source}|${entryId(entry)}`;
+}
+
+function toUpdateResult(entry: ParsedEntry, pinned: string, latest: string): UpdateResult {
+  if (entry.source === "npm") {
+    return { source: "npm", name: entry.name, pinned, latest };
+  }
+  return {
+    source: "git-github",
+    name: entry.name,
+    owner: entry.owner,
+    repo: entry.repo,
+    pinned,
+    latest,
+  };
 }
 
 export async function runCheck(deps: {
@@ -27,8 +43,8 @@ export async function runCheck(deps: {
 }): Promise<UpdateResult[]> {
   if (deps.entries.length === 0) return [];
 
-  // Group entries by source+key, keeping highest pinned version per group
-  const grouped = new Map<GroupKey, { entry: ParsedEntry; version: string }>();
+  // Group entries by source+id, keeping highest pinned version per group
+  const grouped = new Map<string, { entry: ParsedEntry; version: string }>();
   for (const entry of deps.entries) {
     const key = groupKey(entry);
     const existing = grouped.get(key);
@@ -45,13 +61,13 @@ export async function runCheck(deps: {
   let cache = deps.readCache();
 
   // Determine which groups need a fetch
-  const fetchQueue: Array<{ gkey: GroupKey; entry: ParsedEntry }> = [];
-  const cachedLatest = new Map<GroupKey, string>();
+  const fetchQueue: Array<{ gkey: string; entry: ParsedEntry }> = [];
+  const cachedLatest = new Map<string, string>();
 
   for (const [gkey, { entry }] of grouped) {
     const fresh = deps.forceRefresh
       ? null
-      : getEntry(cache, entry.source, cacheKey(entry), deps.now, deps.ttlMs);
+      : getEntry(cache, entry.source, entryId(entry), deps.now, deps.ttlMs);
     if (fresh !== null) {
       cachedLatest.set(gkey, fresh);
     } else {
@@ -76,7 +92,7 @@ export async function runCheck(deps: {
   for (const result of fetchResults) {
     if (result.status === "fulfilled") {
       const { gkey, entry, latest } = result.value;
-      cache = setEntry(cache, entry.source, cacheKey(entry), latest, deps.now);
+      cache = setEntry(cache, entry.source, entryId(entry), latest, deps.now);
       cacheChanged = true;
       cachedLatest.set(gkey, latest);
     } else {
@@ -97,7 +113,7 @@ export async function runCheck(deps: {
     const latest = cachedLatest.get(gkey);
     if (!latest) continue;
     if (semverGt(latest, pinned)) {
-      updates.push({ source: entry.source, name: entry.name, pinned, latest });
+      updates.push(toUpdateResult(entry, pinned, latest));
     }
   }
 

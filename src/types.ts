@@ -4,12 +4,22 @@ export type ParsedEntry =
   | { source: "git-github"; name: string; owner: string; repo: string; version: string };
 
 /** One plugin that has a newer version available. */
-export type UpdateResult = {
-  source: ParsedEntry["source"];
-  name: string;
-  pinned: string;
-  latest: string;
-};
+export type UpdateResult =
+  | { source: "npm"; name: string; pinned: string; latest: string }
+  | {
+      source: "git-github";
+      name: string;
+      owner: string;
+      repo: string;
+      pinned: string;
+      latest: string;
+    };
+
+/** Reason a raw plugin entry was dropped by the parser. */
+export type DropReason = "unpinned-or-malformed" | "unsupported-git-host" | "git-ref-not-semver";
+
+/** A raw plugin entry that could not be parsed, with a reason tag. */
+export type DroppedEntry = { raw: string; reason: DropReason };
 
 /** Persisted cache file schema. */
 export type CacheEntry = {

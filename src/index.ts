@@ -85,12 +85,23 @@ export const OpencodeUpdateNotifier: Plugin = async (
     const rawEntries = loadPluginEntries({ sources, log });
     const { parsed: entries, dropped } = parseEntries(rawEntries);
 
-    if (dropped.length > 0) {
+    const unsupportedGit = dropped.filter((d) => d.reason === "unsupported-git-host");
+    if (unsupportedGit.length > 0) {
+      void log({
+        service: "opencode-update-notifier",
+        level: "info",
+        message: `Skipping ${unsupportedGit.length} git-pinned plugin entries from unsupported hosts (only GitHub is supported)`,
+        extra: { entries: unsupportedGit.map((d) => d.raw) },
+      });
+    }
+
+    const otherDropped = dropped.filter((d) => d.reason !== "unsupported-git-host");
+    if (otherDropped.length > 0) {
       void log({
         service: "opencode-update-notifier",
         level: "debug",
-        message: `Skipping ${dropped.length} unpinned/unrecognized plugin entries`,
-        extra: { dropped },
+        message: `Skipping ${otherDropped.length} unpinned/unrecognized plugin entries`,
+        extra: { dropped: otherDropped },
       });
     }
 
@@ -107,6 +118,8 @@ export const OpencodeUpdateNotifier: Plugin = async (
           fsExists,
           homeDir,
           env,
+          fsWriter: (p, content) => writeFileSync(p, content, "utf-8"),
+          fsRename: (from, to) => renameSync(from, to),
         }),
       writeCache: (cache) =>
         writeCache(

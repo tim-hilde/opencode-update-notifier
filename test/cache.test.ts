@@ -42,6 +42,51 @@ describe("readCache", () => {
     expect(result).toEqual(EMPTY_CACHE);
   });
 
+  test("v1 cache file is normalized on disk when fsWriter/fsRename provided", () => {
+    const v1Cache = { version: 1, entries: { "some-pkg": { latest: "1.0.0", fetchedAt: 0 } } };
+    const writes: Array<{ path: string; content: string }> = [];
+    const renames: Array<{ from: string; to: string }> = [];
+    const result = readCache({
+      fsReader: () => JSON.stringify(v1Cache),
+      fsExists: () => true,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+      fsWriter: (path, content) => writes.push({ path, content }),
+      fsRename: (from, to) => renames.push({ from, to }),
+    });
+    expect(result).toEqual(EMPTY_CACHE);
+    expect(writes).toHaveLength(1);
+    expect(renames).toHaveLength(1);
+    expect(JSON.parse(writes[0]?.content as string)).toEqual(EMPTY_CACHE);
+  });
+
+  test("v1 cache file is NOT rewritten when fsWriter/fsRename omitted", () => {
+    // Confirms readCache remains side-effect-free when called without writers.
+    const v1Cache = { version: 1, entries: {} };
+    const result = readCache({
+      fsReader: () => JSON.stringify(v1Cache),
+      fsExists: () => true,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(result).toEqual(EMPTY_CACHE);
+  });
+
+  test("unrecognized shape (no numeric version) is NOT rewritten", () => {
+    // We only normalize files we recognize as a prior version, not random JSON.
+    const writes: Array<{ path: string; content: string }> = [];
+    const result = readCache({
+      fsReader: () => JSON.stringify({ random: "data" }),
+      fsExists: () => true,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+      fsWriter: (path, content) => writes.push({ path, content }),
+      fsRename: () => {},
+    });
+    expect(result).toEqual(EMPTY_CACHE);
+    expect(writes).toHaveLength(0);
+  });
+
   test("returns empty v2 cache when entries buckets are missing", () => {
     const malformed = { version: 2, entries: { npm: {} } }; // missing git-github
     const fsReader: FsReader = () => JSON.stringify(malformed);
