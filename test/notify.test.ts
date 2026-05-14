@@ -6,14 +6,14 @@ const noopLog: Logger = async () => {};
 
 describe("formatToastMessage", () => {
   test("single update", () => {
-    const updates: UpdateResult[] = [{ name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }];
+    const updates: UpdateResult[] = [{ source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }];
     expect(formatToastMessage(updates)).toBe("Plugin update available:\n- pkg-a 1.0.0 → 2.0.0");
   });
 
   test("two updates", () => {
     const updates: UpdateResult[] = [
-      { name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-b", pinned: "3.0.0", latest: "4.0.0" },
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-b", pinned: "3.0.0", latest: "4.0.0" },
     ];
     expect(formatToastMessage(updates)).toBe(
       "2 plugin updates available:\n- pkg-a 1.0.0 → 2.0.0\n- pkg-b 3.0.0 → 4.0.0",
@@ -22,9 +22,9 @@ describe("formatToastMessage", () => {
 
   test("three updates", () => {
     const updates: UpdateResult[] = [
-      { name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-b", pinned: "3.0.0", latest: "4.0.0" },
-      { name: "pkg-c", pinned: "5.0.0", latest: "6.0.0" },
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-b", pinned: "3.0.0", latest: "4.0.0" },
+      { source: "npm", name: "pkg-c", pinned: "5.0.0", latest: "6.0.0" },
     ];
     expect(formatToastMessage(updates)).toBe(
       "3 plugin updates available:\n- pkg-a 1.0.0 → 2.0.0\n- pkg-b 3.0.0 → 4.0.0\n- pkg-c 5.0.0 → 6.0.0",
@@ -33,15 +33,43 @@ describe("formatToastMessage", () => {
 
   test("five updates (all shown, no truncation)", () => {
     const updates: UpdateResult[] = [
-      { name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-b", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-c", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-d", pinned: "1.0.0", latest: "2.0.0" },
-      { name: "pkg-e", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-b", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-c", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-d", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "pkg-e", pinned: "1.0.0", latest: "2.0.0" },
     ];
     expect(formatToastMessage(updates)).toBe(
       "5 plugin updates available:\n- pkg-a 1.0.0 → 2.0.0\n- pkg-b 1.0.0 → 2.0.0\n- pkg-c 1.0.0 → 2.0.0\n- pkg-d 1.0.0 → 2.0.0\n- pkg-e 1.0.0 → 2.0.0",
     );
+  });
+
+  test("git-github update renders with (git) tag", () => {
+    const updates: UpdateResult[] = [
+      { source: "git-github", name: "superpowers", pinned: "5.1.0", latest: "5.2.0" },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- superpowers (git): 5.1.0 → 5.2.0",
+    );
+  });
+
+  test("mixed npm and git-github list renders both correctly", () => {
+    const updates: UpdateResult[] = [
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "git-github", name: "superpowers", pinned: "5.1.0", latest: "5.2.0" },
+    ];
+    const message = formatToastMessage(updates);
+    expect(message).toContain("- pkg-a 1.0.0 → 2.0.0");
+    expect(message).toContain("- superpowers (git): 5.1.0 → 5.2.0");
+    expect(message).not.toContain("pkg-a (git)");
+  });
+
+  test("mixed list aggregation count is correct", () => {
+    const updates: UpdateResult[] = [
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "git-github", name: "superpowers", pinned: "5.1.0", latest: "5.2.0" },
+    ];
+    expect(formatToastMessage(updates)).toMatch(/^2 plugin updates available:/);
   });
 });
 
@@ -62,7 +90,7 @@ describe("notify", () => {
     const toastCalls: unknown[] = [];
     const logCalls: unknown[] = [];
     await notify({
-      updates: [{ name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }],
+      updates: [{ source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }],
       showToast: async (t) => {
         toastCalls.push(t);
       },
@@ -82,7 +110,7 @@ describe("notify", () => {
   test("calls showToast even if log call fails", async () => {
     const toastCalls: unknown[] = [];
     await notify({
-      updates: [{ name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }],
+      updates: [{ source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }],
       showToast: async (t) => {
         toastCalls.push(t);
       },

@@ -8,7 +8,13 @@ export type ToastInput = {
 };
 
 export function formatToastMessage(updates: UpdateResult[]): string {
-  const bullets = updates.map((u) => `- ${u.name} ${u.pinned} → ${u.latest}`).join("\n");
+  const bullets = updates
+    .map((u) =>
+      u.source === "git-github"
+        ? `- ${u.name} (git): ${u.pinned} → ${u.latest}`
+        : `- ${u.name} ${u.pinned} → ${u.latest}`,
+    )
+    .join("\n");
 
   if (updates.length === 1) {
     return `Plugin update available:\n${bullets}`;
