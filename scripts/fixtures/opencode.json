@@ -1,6 +1,7 @@
 {
   "plugin": [
     "@opencode-ai/plugin@1.14.31",
-    "semver@7.6.3"
+    "semver@7.6.3",
+    "ow@git+https://github.com/sindresorhus/ow.git#v1.1.1"
   ]
 }
