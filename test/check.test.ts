@@ -467,6 +467,56 @@ describe("runCheck", () => {
     expect(results[0]?.latest).toBe("2.5.0");
   });
 
+  test("name comes from max-version entry when two git-github entries share owner/repo", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "git-github", name: "name-from-lower", owner: "org", repo: "plugin", version: "1.0.0" },
+      { source: "git-github", name: "name-from-higher", owner: "org", repo: "plugin", version: "2.0.0" },
+    ];
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({}),
+      fetchLatestGithubTag: makeGithubFetcher({ "org/plugin": "3.0.0" }),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.name).toBe("name-from-higher");
+  });
+
+  test("writeCache is NOT called when all entries are cache-fresh", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "pkg-a", version: "1.0.0" },
+      { source: "git-github", name: "gh-plugin", owner: "org", repo: "repo", version: "1.0.0" },
+    ];
+    const hotCache: Cache = {
+      version: 2,
+      entries: {
+        npm: { "pkg-a": { latest: "2.0.0", fetchedAt: NOW - 1000 } },
+        "git-github": { "org/repo": { latest: "3.0.0", fetchedAt: NOW - 1000 } },
+      },
+    };
+    let writeCacheCalled = false;
+
+    await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({}),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => hotCache,
+      writeCache: () => {
+        writeCacheCalled = true;
+      },
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    expect(writeCacheCalled).toBe(false);
+  });
+
   test("UpdateResult.source: all results carry the correct source field", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "npm-pkg", version: "1.0.0" },

@@ -36,7 +36,9 @@ export async function runCheck(deps: {
       grouped.set(key, { entry, version: entry.version });
     } else {
       const max = semverMaxSatisfying([existing.version, entry.version], "*") ?? existing.version;
-      grouped.set(key, { entry: existing.entry, version: max });
+      if (max !== existing.version) {
+        grouped.set(key, { entry, version: max });
+      }
     }
   }
 
@@ -58,6 +60,7 @@ export async function runCheck(deps: {
   }
 
   // Fetch stale/missing entries in parallel
+  let cacheChanged = false;
   const fetchResults = await Promise.allSettled(
     fetchQueue.map(async ({ gkey, entry }) => {
       let latest: string;
@@ -74,6 +77,7 @@ export async function runCheck(deps: {
     if (result.status === "fulfilled") {
       const { gkey, entry, latest } = result.value;
       cache = setEntry(cache, entry.source, cacheKey(entry), latest, deps.now);
+      cacheChanged = true;
       cachedLatest.set(gkey, latest);
     } else {
       void deps.log({
@@ -85,7 +89,7 @@ export async function runCheck(deps: {
     }
   }
 
-  deps.writeCache(cache);
+  if (cacheChanged) deps.writeCache(cache);
 
   // Compare pinned vs latest
   const updates: UpdateResult[] = [];
