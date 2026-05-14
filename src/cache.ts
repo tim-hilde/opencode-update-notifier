@@ -3,7 +3,7 @@ import type { Cache, EnvReader, FsExists, FsReader, FsRename, FsWriter, HomeDir 
 
 const CACHE_REL = "opencode-update-notifier/cache.json";
 export const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const EMPTY_CACHE: Cache = { version: 1, entries: {} };
+const EMPTY_CACHE: Cache = { version: 2, entries: { npm: {}, "git-github": {} } };
 
 function cachePath(env: EnvReader, homeDir: HomeDir): string {
   const xdg = env("XDG_CACHE_HOME");
@@ -24,7 +24,19 @@ export function readCache(deps: {
     if (
       typeof parsed !== "object" ||
       parsed === null ||
-      (parsed as Record<string, unknown>).version !== 1
+      (parsed as Record<string, unknown>).version !== 2
+    ) {
+      return structuredClone(EMPTY_CACHE);
+    }
+    const obj = parsed as Record<string, unknown>;
+    const entries = obj.entries as Record<string, unknown> | undefined;
+    if (
+      typeof entries !== "object" ||
+      entries === null ||
+      typeof entries.npm !== "object" ||
+      entries.npm === null ||
+      typeof entries["git-github"] !== "object" ||
+      entries["git-github"] === null
     ) {
       return structuredClone(EMPTY_CACHE);
     }
@@ -34,19 +46,34 @@ export function readCache(deps: {
   }
 }
 
-export function getEntry(cache: Cache, name: string, now: number, ttlMs: number): string | null {
-  const entry = cache.entries[name];
+export function getEntry(
+  cache: Cache,
+  source: "npm" | "git-github",
+  key: string,
+  now: number,
+  ttlMs: number,
+): string | null {
+  const entry = cache.entries[source][key];
   if (!entry) return null;
   if (now - entry.fetchedAt > ttlMs) return null;
   return entry.latest;
 }
 
-export function setEntry(cache: Cache, name: string, latest: string, now: number): Cache {
+export function setEntry(
+  cache: Cache,
+  source: "npm" | "git-github",
+  key: string,
+  latest: string,
+  now: number,
+): Cache {
   return {
     ...cache,
     entries: {
       ...cache.entries,
-      [name]: { latest, fetchedAt: now },
+      [source]: {
+        ...cache.entries[source],
+        [key]: { latest, fetchedAt: now },
+      },
     },
   };
 }
