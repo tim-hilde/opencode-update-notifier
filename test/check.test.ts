@@ -696,7 +696,7 @@ describe("runCheck", () => {
     ]);
   });
 
-  test("configOrigin stays tui when tui config picks higher version", async () => {
+  test("configOrigin becomes tui-global when tui config has higher version", async () => {
     const entries: ParsedEntry[] = [
       { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "global" },
       { source: "npm", name: "shared-pkg", version: "2.0.0", configOrigin: "tui" },
