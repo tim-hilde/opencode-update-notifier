@@ -99,6 +99,49 @@ describe("formatToastMessage", () => {
   });
 });
 
+describe("formatToastMessage — origin suffix", () => {
+  test("tui-only plugin shows (TUI) suffix", () => {
+    const updates: UpdateResult[] = [
+      { source: "npm", name: "tui-plugin", pinned: "1.0.0", latest: "2.0.0", configOrigin: "tui" },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- tui-plugin (TUI): 1.0.0 → 2.0.0",
+    );
+  });
+
+  test("dual-origin plugin shows (TUI + config) suffix", () => {
+    const updates: UpdateResult[] = [
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "1.0.0",
+        latest: "2.0.0",
+        configOrigin: "tui-global",
+      },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- shared-pkg (TUI + config): 1.0.0 → 2.0.0",
+    );
+  });
+
+  test("git-github with tui origin shows both suffixes in correct order", () => {
+    const updates: UpdateResult[] = [
+      {
+        source: "git-github",
+        name: "tui-git-pkg",
+        owner: "org",
+        repo: "repo",
+        pinned: "1.0.0",
+        latest: "2.0.0",
+        configOrigin: "tui",
+      },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- tui-git-pkg (git) (TUI): 1.0.0 → 2.0.0",
+    );
+  });
+});
+
 describe("notify", () => {
   test("does nothing when updates array is empty", async () => {
     const toastCalls: unknown[] = [];

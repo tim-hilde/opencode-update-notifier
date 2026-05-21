@@ -10,7 +10,14 @@ export type ToastInput = {
 export function formatToastMessage(updates: UpdateResult[]): string {
   const bullets = updates
     .map((u) => {
-      const label = u.source === "git-github" ? `${u.name} (git)` : u.name;
+      const sourceTag = u.source === "git-github" ? " (git)" : "";
+      const originTag =
+        u.configOrigin === "tui-global"
+          ? " (TUI + config)"
+          : u.configOrigin === "tui"
+            ? " (TUI)"
+            : "";
+      const label = `${u.name}${sourceTag}${originTag}`;
       return `- ${label}: ${u.pinned} → ${u.latest}`;
     })
     .join("\n");
