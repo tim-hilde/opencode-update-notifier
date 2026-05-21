@@ -668,4 +668,57 @@ describe("runCheck", () => {
     expect(npmResult?.source).toBe("npm");
     expect(ghResult?.source).toBe("git-github");
   });
+
+  test("merges configOrigin to tui-global when same package exists in both configs", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "1.2.0", configOrigin: "tui" },
+    ];
+    const fetchLatest = makeNpmFetcher({ "shared-pkg": "2.0.0" });
+    const results = await runCheck({
+      entries,
+      fetchLatest,
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "1.2.0",
+        latest: "2.0.0",
+        configOrigin: "tui-global",
+      },
+    ]);
+  });
+
+  test("configOrigin stays tui when tui config picks higher version", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "2.0.0", configOrigin: "tui" },
+    ];
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ "shared-pkg": "3.0.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "2.0.0",
+        latest: "3.0.0",
+        configOrigin: "tui-global",
+      },
+    ]);
+  });
 });

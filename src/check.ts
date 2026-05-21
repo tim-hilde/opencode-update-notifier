@@ -1,6 +1,6 @@
 import { gt as semverGt, maxSatisfying as semverMaxSatisfying } from "semver";
 import { getEntry, setEntry } from "./cache.js";
-import type { Cache, Logger, ParsedEntry, UpdateResult } from "./types.ts";
+import type { Cache, ConfigOrigin, Logger, ParsedEntry, UpdateResult } from "./types.ts";
 
 /**
  * Identity used as both the cache key within a source bucket and (combined
@@ -16,9 +16,15 @@ function groupKey(entry: ParsedEntry): string {
   return `${entry.source}|${entryId(entry)}`;
 }
 
+function mergeConfigOrigin(a: ConfigOrigin, b: ConfigOrigin): ConfigOrigin {
+  if (a === "tui-global" || b === "tui-global") return "tui-global";
+  if (a !== b) return "tui-global";
+  return a;
+}
+
 function toUpdateResult(entry: ParsedEntry, pinned: string, latest: string): UpdateResult {
   if (entry.source === "npm") {
-    return { source: "npm", name: entry.name, pinned, latest, configOrigin: "global" };
+    return { source: "npm", name: entry.name, pinned, latest, configOrigin: entry.configOrigin };
   }
   return {
     source: "git-github",
@@ -27,7 +33,7 @@ function toUpdateResult(entry: ParsedEntry, pinned: string, latest: string): Upd
     repo: entry.repo,
     pinned,
     latest,
-    configOrigin: "global",
+    configOrigin: entry.configOrigin,
   };
 }
 
@@ -53,8 +59,11 @@ export async function runCheck(deps: {
       grouped.set(key, { entry, version: entry.version });
     } else {
       const max = semverMaxSatisfying([existing.version, entry.version], "*") ?? existing.version;
+      const mergedOrigin = mergeConfigOrigin(existing.entry.configOrigin, entry.configOrigin);
       if (max !== existing.version) {
-        grouped.set(key, { entry, version: max });
+        grouped.set(key, { entry: { ...entry, configOrigin: mergedOrigin }, version: max });
+      } else {
+        existing.entry.configOrigin = mergedOrigin;
       }
     }
   }
