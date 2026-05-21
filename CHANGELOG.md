@@ -1,3 +1,19 @@
+# [0.3.0](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.2.0...v0.3.0) (2026-05-21)
+
+
+### Bug Fixes
+
+* avoid mutation in configOrigin merge, add else-branch test ([9668a34](https://github.com/tim-hilde/opencode-update-notifier/commit/9668a34e91b09514268464d600dfd702743a0181))
+
+
+### Features
+
+* add ConfigOrigin type to ParsedEntry and UpdateResult ([bf7776f](https://github.com/tim-hilde/opencode-update-notifier/commit/bf7776fb79979bfe5e7bff8ef25b9b9a8cd6837f))
+* add getTuiConfigSources() to read tui.json/tui.jsonc ([09597d0](https://github.com/tim-hilde/opencode-update-notifier/commit/09597d01a42fd6952ab6704fa5c75c0e7ecd4e2a))
+* load TUI config plugins, tag and merge with regular entries ([c33d215](https://github.com/tim-hilde/opencode-update-notifier/commit/c33d21509ee6a75faa995dd270fbfb1f31d489e0))
+* merge configOrigin in check.ts grouping, pass to UpdateResult ([2464f85](https://github.com/tim-hilde/opencode-update-notifier/commit/2464f850dc745d2edabcd7e7e0c6f78d4ef013af))
+* show (TUI) / (TUI + config) suffix in toast labels ([8b1a48d](https://github.com/tim-hilde/opencode-update-notifier/commit/8b1a48d5954c2f1bcec2b474fb48df8707dae744))
+
 # [0.2.0](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.1.0...v0.2.0) (2026-05-14)
 
 
