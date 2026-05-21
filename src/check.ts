@@ -18,7 +18,7 @@ function groupKey(entry: ParsedEntry): string {
 
 function toUpdateResult(entry: ParsedEntry, pinned: string, latest: string): UpdateResult {
   if (entry.source === "npm") {
-    return { source: "npm", name: entry.name, pinned, latest };
+    return { source: "npm", name: entry.name, pinned, latest, configOrigin: "global" };
   }
   return {
     source: "git-github",
@@ -27,6 +27,7 @@ function toUpdateResult(entry: ParsedEntry, pinned: string, latest: string): Upd
     repo: entry.repo,
     pinned,
     latest,
+    configOrigin: "global",
   };
 }
 

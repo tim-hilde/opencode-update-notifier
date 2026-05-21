@@ -7,11 +7,17 @@ describe("parseEntry", () => {
       source: "npm",
       name: "@scope/pkg",
       version: "1.2.3",
+      configOrigin: "global",
     });
   });
 
   test("unscoped + pinned", () => {
-    expect(parseEntry("my-pkg@2.0.0")).toEqual({ source: "npm", name: "my-pkg", version: "2.0.0" });
+    expect(parseEntry("my-pkg@2.0.0")).toEqual({
+      source: "npm",
+      name: "my-pkg",
+      version: "2.0.0",
+      configOrigin: "global",
+    });
   });
 
   test("pre-release version", () => {
@@ -19,6 +25,7 @@ describe("parseEntry", () => {
       source: "npm",
       name: "my-pkg",
       version: "1.0.0-beta.1",
+      configOrigin: "global",
     });
   });
 
@@ -27,6 +34,7 @@ describe("parseEntry", () => {
       source: "npm",
       name: "@scope/pkg",
       version: "1.0.0-alpha.2",
+      configOrigin: "global",
     });
   });
 
@@ -62,6 +70,7 @@ describe("parseEntry", () => {
       owner: "obra",
       repo: "superpowers",
       version: "5.1.0",
+      configOrigin: "global",
     });
   });
 
@@ -72,6 +81,7 @@ describe("parseEntry", () => {
       owner: "obra",
       repo: "superpowers",
       version: "5.1.0",
+      configOrigin: "global",
     });
   });
 
@@ -82,6 +92,7 @@ describe("parseEntry", () => {
       owner: "owner",
       repo: "repo",
       version: "1.0.0",
+      configOrigin: "global",
     });
   });
 
@@ -92,6 +103,7 @@ describe("parseEntry", () => {
       owner: "owner",
       repo: "repo",
       version: "1.0.0-beta.1",
+      configOrigin: "global",
     });
   });
 
@@ -102,6 +114,7 @@ describe("parseEntry", () => {
       owner: "owner",
       repo: "repo",
       version: "5.0.0",
+      configOrigin: "global",
     });
   });
 
@@ -112,6 +125,7 @@ describe("parseEntry", () => {
       owner: "owner",
       repo: "repo",
       version: "5.1.0",
+      configOrigin: "global",
     });
   });
 
@@ -161,8 +175,8 @@ describe("parseEntries", () => {
       "./local-plugin",
     ]);
     expect(result.parsed).toEqual([
-      { source: "npm", name: "@scope/pkg", version: "1.0.0" },
-      { source: "npm", name: "my-tool", version: "3.0.0" },
+      { source: "npm", name: "@scope/pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "my-tool", version: "3.0.0", configOrigin: "global" },
     ]);
     expect(result.dropped).toEqual([
       { raw: "unpinned-pkg", reason: "unpinned-or-malformed" },
@@ -183,13 +197,14 @@ describe("parseEntries", () => {
       "unpinned-pkg",
     ]);
     expect(result.parsed).toEqual([
-      { source: "npm", name: "my-tool", version: "3.0.0" },
+      { source: "npm", name: "my-tool", version: "3.0.0", configOrigin: "global" },
       {
         source: "git-github",
         name: "superpowers",
         owner: "obra",
         repo: "superpowers",
         version: "5.1.0",
+        configOrigin: "global",
       },
     ]);
     expect(result.dropped).toEqual([{ raw: "unpinned-pkg", reason: "unpinned-or-malformed" }]);
