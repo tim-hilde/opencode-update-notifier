@@ -1,11 +1,21 @@
+/** Which config(s) a plugin entry comes from. */
+export type ConfigOrigin = "global" | "tui" | "tui-global";
+
 /** A plugin entry that has been successfully parsed. */
 export type ParsedEntry =
-  | { source: "npm"; name: string; version: string }
-  | { source: "git-github"; name: string; owner: string; repo: string; version: string };
+  | { source: "npm"; name: string; version: string; configOrigin: ConfigOrigin }
+  | {
+      source: "git-github";
+      name: string;
+      owner: string;
+      repo: string;
+      version: string;
+      configOrigin: ConfigOrigin;
+    };
 
 /** One plugin that has a newer version available. */
 export type UpdateResult =
-  | { source: "npm"; name: string; pinned: string; latest: string }
+  | { source: "npm"; name: string; pinned: string; latest: string; configOrigin: ConfigOrigin }
   | {
       source: "git-github";
       name: string;
@@ -13,6 +23,7 @@ export type UpdateResult =
       repo: string;
       pinned: string;
       latest: string;
+      configOrigin: ConfigOrigin;
     };
 
 /** Reason a raw plugin entry was dropped by the parser. */
