@@ -13,6 +13,7 @@ import {
   getManagedConfigSources,
   getManagedPlatformPaths,
   getProjectConfigSources,
+  getTuiConfigSources,
 } from "./config/sources.js";
 import { notify } from "./notify.js";
 import { parseEntries } from "./parse.js";
@@ -81,9 +82,23 @@ export const OpencodeUpdateNotifier: Plugin = async (
       }),
     ].filter((s): s is NonNullable<typeof s> => s !== null);
 
-    // Load and parse plugin entries
-    const rawEntries = loadPluginEntries({ sources, log });
-    const { parsed: entries, dropped } = parseEntries(rawEntries);
+    // Load TUI config sources
+    const tuiSources = getTuiConfigSources({ fsReader, fsExists, homeDir, env });
+
+    // Load and parse plugin entries from both configurations
+    const rawRegular = loadPluginEntries({ sources, log });
+    const rawTui = loadPluginEntries({ sources: tuiSources, log });
+    const { parsed: regularParsed, dropped: regularDropped } = parseEntries(rawRegular);
+    const { parsed: tuiParsed, dropped: tuiDropped } = parseEntries(rawTui);
+
+    // Tag entries with their config origin — parse.ts already sets "global" by default,
+    // so we only need to overwrite for TUI entries
+    const entries = [
+      ...regularParsed,
+      ...tuiParsed.map((e) => ({ ...e, configOrigin: "tui" as const })),
+    ];
+
+    const dropped = [...regularDropped, ...tuiDropped];
 
     const unsupportedGit = dropped.filter((d) => d.reason === "unsupported-git-host");
     if (unsupportedGit.length > 0) {

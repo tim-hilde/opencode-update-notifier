@@ -7,6 +7,7 @@ import {
   getInlineConfigSource,
   getManagedConfigSources,
   getProjectConfigSources,
+  getTuiConfigSources,
 } from "../src/config/sources.ts";
 import type { EnvReader, FsExists, FsReader } from "../src/types.ts";
 
@@ -195,6 +196,76 @@ describe("getManagedConfigSources", () => {
       fsReader,
       fsExists,
       platformPaths: ["/etc/opencode/opencode.json"],
+    });
+    expect(sources).toHaveLength(0);
+  });
+});
+
+// --- getTuiConfigSources ---
+describe("getTuiConfigSources", () => {
+  test("returns tui.json source when only .json exists", () => {
+    const { fsReader, fsExists } = makeFs({
+      "/home/user/.config/opencode/tui.json": '{"plugin":["a@1.0.0"]}',
+    });
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(sources).toHaveLength(1);
+    expect(sources[0]?.path).toBe("/home/user/.config/opencode/tui.json");
+  });
+
+  test("returns tui.jsonc source when only .jsonc exists", () => {
+    const { fsReader, fsExists } = makeFs({
+      "/home/user/.config/opencode/tui.jsonc": "{}",
+    });
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(sources).toHaveLength(1);
+    expect(sources[0]?.path).toBe("/home/user/.config/opencode/tui.jsonc");
+  });
+
+  test("returns both when both .json and .jsonc exist", () => {
+    const { fsReader, fsExists } = makeFs({
+      "/home/user/.config/opencode/tui.json": "{}",
+      "/home/user/.config/opencode/tui.jsonc": "{}",
+    });
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(sources).toHaveLength(2);
+  });
+
+  test("honors XDG_CONFIG_HOME", () => {
+    const { fsReader, fsExists } = makeFs({
+      "/custom/config/opencode/tui.json": "{}",
+    });
+    const env: EnvReader = (k: string) => (k === "XDG_CONFIG_HOME" ? "/custom/config" : undefined);
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env,
+    });
+    expect(sources[0]?.path).toBe("/custom/config/opencode/tui.json");
+  });
+
+  test("returns empty array when neither file exists", () => {
+    const { fsReader, fsExists } = makeFs({});
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env: () => undefined,
     });
     expect(sources).toHaveLength(0);
   });

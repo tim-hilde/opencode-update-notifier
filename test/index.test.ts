@@ -105,7 +105,15 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
       {},
       {
-        _runCheck: async () => [{ name: "my-pkg", pinned: "1.0.0", latest: "2.0.0" }],
+        _runCheck: async () => [
+          {
+            source: "npm",
+            name: "my-pkg",
+            pinned: "1.0.0",
+            latest: "2.0.0",
+            configOrigin: "global",
+          },
+        ],
       },
     );
 
@@ -166,7 +174,15 @@ describe("slash command", () => {
       {
         _runCheck: async (deps) => {
           checkCalledWith = deps;
-          return [{ name: "pkg", pinned: "1.0.0", latest: "2.0.0" }];
+          return [
+            {
+              source: "npm",
+              name: "pkg",
+              pinned: "1.0.0",
+              latest: "2.0.0",
+              configOrigin: "global",
+            },
+          ];
         },
       },
     );
@@ -301,6 +317,7 @@ describe("fetchLatestGithubTag wiring", () => {
             repo: "superpowers",
             pinned: "5.1.0",
             latest: "5.2.0",
+            configOrigin: "global",
           },
         ],
       },
@@ -369,7 +386,13 @@ describe("fetchLatestGithubTag wiring", () => {
       {},
       {
         _runCheck: async (_deps) => [
-          { source: "npm" as const, name: "my-npm-pkg", pinned: "1.0.0", latest: "1.1.0" },
+          {
+            source: "npm" as const,
+            name: "my-npm-pkg",
+            pinned: "1.0.0",
+            latest: "1.1.0",
+            configOrigin: "global",
+          },
           {
             source: "git-github" as const,
             name: "superpowers",
@@ -377,6 +400,7 @@ describe("fetchLatestGithubTag wiring", () => {
             repo: "superpowers",
             pinned: "5.1.0",
             latest: "5.2.0",
+            configOrigin: "global",
           },
         ],
       },

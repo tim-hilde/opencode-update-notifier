@@ -30,7 +30,9 @@ function emptyCache(): Cache {
 
 describe("runCheck", () => {
   test("returns update when latest > pinned", async () => {
-    const entries: ParsedEntry[] = [{ source: "npm", name: "pkg-a", version: "1.0.0" }];
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "pkg-a", version: "1.0.0", configOrigin: "global" },
+    ];
     const fetchLatest = makeNpmFetcher({ "pkg-a": "2.0.0" });
     const fetchLatestGithubTag = makeGithubFetcher({});
     const initialCache = emptyCache();
@@ -49,12 +51,16 @@ describe("runCheck", () => {
       log: noopLog,
     });
 
-    expect(results).toEqual([{ source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0" }]);
+    expect(results).toEqual([
+      { source: "npm", name: "pkg-a", pinned: "1.0.0", latest: "2.0.0", configOrigin: "global" },
+    ]);
     expect(writtenCache?.entries.npm["pkg-a"]?.latest).toBe("2.0.0");
   });
 
   test("returns no update when latest === pinned", async () => {
-    const entries: ParsedEntry[] = [{ source: "npm", name: "pkg-a", version: "1.0.0" }];
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "pkg-a", version: "1.0.0", configOrigin: "global" },
+    ];
     const fetchLatest = makeNpmFetcher({ "pkg-a": "1.0.0" });
     const results = await runCheck({
       entries,
@@ -70,7 +76,9 @@ describe("runCheck", () => {
   });
 
   test("returns no update when pinned is GREATER than latest (user on pre-release)", async () => {
-    const entries: ParsedEntry[] = [{ source: "npm", name: "pkg-a", version: "2.0.0-beta.1" }];
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "pkg-a", version: "2.0.0-beta.1", configOrigin: "global" },
+    ];
     const fetchLatest = makeNpmFetcher({ "pkg-a": "1.9.0" });
     const results = await runCheck({
       entries,
@@ -86,7 +94,9 @@ describe("runCheck", () => {
   });
 
   test("uses npm cache when entry is fresh, does NOT call registry", async () => {
-    const entries: ParsedEntry[] = [{ source: "npm", name: "cached-pkg", version: "1.0.0" }];
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "cached-pkg", version: "1.0.0", configOrigin: "global" },
+    ];
     const initialCache: Cache = {
       version: 2,
       entries: {
@@ -113,14 +123,20 @@ describe("runCheck", () => {
 
     expect(registryCalled).toBe(false);
     expect(results).toEqual([
-      { source: "npm", name: "cached-pkg", pinned: "1.0.0", latest: "3.0.0" },
+      {
+        source: "npm",
+        name: "cached-pkg",
+        pinned: "1.0.0",
+        latest: "3.0.0",
+        configOrigin: "global",
+      },
     ]);
   });
 
   test("picks max pinned version when same npm package appears multiple times", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "pkg", version: "1.0.0" },
-      { source: "npm", name: "pkg", version: "2.0.0" },
+      { source: "npm", name: "pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "pkg", version: "2.0.0", configOrigin: "global" },
     ];
     const fetchLatest = makeNpmFetcher({ pkg: "2.5.0" });
     const results = await runCheck({
@@ -133,13 +149,15 @@ describe("runCheck", () => {
       ttlMs: TTL_MS,
       log: noopLog,
     });
-    expect(results).toEqual([{ source: "npm", name: "pkg", pinned: "2.0.0", latest: "2.5.0" }]);
+    expect(results).toEqual([
+      { source: "npm", name: "pkg", pinned: "2.0.0", latest: "2.5.0", configOrigin: "global" },
+    ]);
   });
 
   test("continues with other packages when one registry call fails", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "good-pkg", version: "1.0.0" },
-      { source: "npm", name: "bad-pkg", version: "1.0.0" },
+      { source: "npm", name: "good-pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "bad-pkg", version: "1.0.0", configOrigin: "global" },
     ];
     const fetchLatest = async (name: string) => {
       if (name === "bad-pkg") throw new Error("network error");
@@ -156,7 +174,7 @@ describe("runCheck", () => {
       log: noopLog,
     });
     expect(results).toEqual([
-      { source: "npm", name: "good-pkg", pinned: "1.0.0", latest: "2.0.0" },
+      { source: "npm", name: "good-pkg", pinned: "1.0.0", latest: "2.0.0", configOrigin: "global" },
     ]);
   });
 
@@ -175,7 +193,9 @@ describe("runCheck", () => {
   });
 
   test("forceRefresh: true bypasses npm cache even when entry is fresh", async () => {
-    const entries: ParsedEntry[] = [{ source: "npm", name: "cached-pkg", version: "1.0.0" }];
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "cached-pkg", version: "1.0.0", configOrigin: "global" },
+    ];
     const initialCache: Cache = {
       version: 2,
       entries: {
@@ -206,7 +226,13 @@ describe("runCheck", () => {
 
     expect(registryCalled).toBe(true);
     expect(results).toEqual([
-      { source: "npm", name: "cached-pkg", pinned: "1.0.0", latest: "4.0.0" },
+      {
+        source: "npm",
+        name: "cached-pkg",
+        pinned: "1.0.0",
+        latest: "4.0.0",
+        configOrigin: "global",
+      },
     ]);
     expect(writtenCache?.entries.npm["cached-pkg"]?.latest).toBe("4.0.0");
   });
@@ -221,6 +247,7 @@ describe("runCheck", () => {
         owner: "acme",
         repo: "my-plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
     ];
     let githubArgs: [string, string] | null = null;
@@ -255,19 +282,21 @@ describe("runCheck", () => {
         repo: "my-plugin",
         pinned: "1.0.0",
         latest: "2.0.0",
+        configOrigin: "global",
       },
     ]);
   });
 
   test("mixed entries: npm and git-github both fetched with correct dispatchers", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
       {
         source: "git-github",
         name: "gh-plugin",
         owner: "org",
         repo: "gh-plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
     ];
     const npmCalls: string[] = [];
@@ -301,6 +330,7 @@ describe("runCheck", () => {
       name: "npm-pkg",
       pinned: "1.0.0",
       latest: "2.0.0",
+      configOrigin: "global",
     });
     expect(results.find((r) => r.source === "git-github")).toEqual({
       source: "git-github",
@@ -309,18 +339,20 @@ describe("runCheck", () => {
       repo: "gh-plugin",
       pinned: "1.0.0",
       latest: "3.0.0",
+      configOrigin: "global",
     });
   });
 
   test("cache bucket isolation: npm cache hit does not skip git-github fetch", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
       {
         source: "git-github",
         name: "gh-plugin",
         owner: "org",
         repo: "gh-plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
     ];
     const hotCache: Cache = {
@@ -358,13 +390,14 @@ describe("runCheck", () => {
 
   test("cache bucket isolation: git-github cache hit does not skip npm fetch", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
       {
         source: "git-github",
         name: "gh-plugin",
         owner: "org",
         repo: "gh-plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
     ];
     const hotCache: Cache = {
@@ -402,13 +435,14 @@ describe("runCheck", () => {
 
   test("forceRefresh bypasses both npm and git-github cache", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
       {
         source: "git-github",
         name: "gh-plugin",
         owner: "org",
         repo: "gh-plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
     ];
     const hotCache: Cache = {
@@ -448,8 +482,15 @@ describe("runCheck", () => {
 
   test("git fetcher rejection: skips failed entry, npm entry still produces result", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "bad-repo", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "bad-repo",
+        version: "1.0.0",
+        configOrigin: "global",
+      },
     ];
     const fetchLatest = makeNpmFetcher({ "npm-pkg": "2.0.0" });
     const fetchLatestGithubTag = async (_owner: string, _repo: string) => {
@@ -478,13 +519,28 @@ describe("runCheck", () => {
       name: "npm-pkg",
       pinned: "1.0.0",
       latest: "2.0.0",
+      configOrigin: "global",
     });
   });
 
   test("same owner/repo pinned differently: only highest pinned compared, no duplicate cache writes", async () => {
     const entries: ParsedEntry[] = [
-      { source: "git-github", name: "plugin-v1", owner: "org", repo: "plugin", version: "1.0.0" },
-      { source: "git-github", name: "plugin-v2", owner: "org", repo: "plugin", version: "2.0.0" },
+      {
+        source: "git-github",
+        name: "plugin-v1",
+        owner: "org",
+        repo: "plugin",
+        version: "1.0.0",
+        configOrigin: "global",
+      },
+      {
+        source: "git-github",
+        name: "plugin-v2",
+        owner: "org",
+        repo: "plugin",
+        version: "2.0.0",
+        configOrigin: "global",
+      },
     ];
     let githubCallCount = 0;
     const fetchLatestGithubTag = async (_owner: string, _repo: string) => {
@@ -521,6 +577,7 @@ describe("runCheck", () => {
         owner: "org",
         repo: "plugin",
         version: "1.0.0",
+        configOrigin: "global",
       },
       {
         source: "git-github",
@@ -528,6 +585,7 @@ describe("runCheck", () => {
         owner: "org",
         repo: "plugin",
         version: "2.0.0",
+        configOrigin: "global",
       },
     ];
     const results = await runCheck({
@@ -547,8 +605,15 @@ describe("runCheck", () => {
 
   test("writeCache is NOT called when all entries are cache-fresh", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "pkg-a", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "repo", version: "1.0.0" },
+      { source: "npm", name: "pkg-a", version: "1.0.0", configOrigin: "global" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "repo",
+        version: "1.0.0",
+        configOrigin: "global",
+      },
     ];
     const hotCache: Cache = {
       version: 2,
@@ -577,8 +642,15 @@ describe("runCheck", () => {
 
   test("UpdateResult.source: all results carry the correct source field", async () => {
     const entries: ParsedEntry[] = [
-      { source: "npm", name: "npm-pkg", version: "1.0.0" },
-      { source: "git-github", name: "gh-plugin", owner: "org", repo: "repo", version: "1.0.0" },
+      { source: "npm", name: "npm-pkg", version: "1.0.0", configOrigin: "global" },
+      {
+        source: "git-github",
+        name: "gh-plugin",
+        owner: "org",
+        repo: "repo",
+        version: "1.0.0",
+        configOrigin: "global",
+      },
     ];
     const results = await runCheck({
       entries,
@@ -595,5 +667,84 @@ describe("runCheck", () => {
     const ghResult = results.find((r) => r.name === "gh-plugin");
     expect(npmResult?.source).toBe("npm");
     expect(ghResult?.source).toBe("git-github");
+  });
+
+  test("merges configOrigin to tui-global when same package exists in both configs", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "1.2.0", configOrigin: "tui" },
+    ];
+    const fetchLatest = makeNpmFetcher({ "shared-pkg": "2.0.0" });
+    const results = await runCheck({
+      entries,
+      fetchLatest,
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "1.2.0",
+        latest: "2.0.0",
+        configOrigin: "tui-global",
+      },
+    ]);
+  });
+
+  test("configOrigin becomes tui-global when tui config has higher version", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "2.0.0", configOrigin: "tui" },
+    ];
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ "shared-pkg": "3.0.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "2.0.0",
+        latest: "3.0.0",
+        configOrigin: "tui-global",
+      },
+    ]);
+  });
+
+  test("configOrigin merges to tui-global when global entry has higher version", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "2.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "tui" },
+    ];
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ "shared-pkg": "2.5.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "2.0.0",
+        latest: "2.5.0",
+        configOrigin: "tui-global",
+      },
+    ]);
   });
 });

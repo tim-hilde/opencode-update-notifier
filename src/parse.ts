@@ -43,6 +43,7 @@ export function parseEntryDetailed(raw: string): ParseOutcome {
         owner: githubMatch[2] as string,
         repo: githubMatch[3] as string,
         version,
+        configOrigin: "global",
       },
     };
   }
@@ -55,14 +56,24 @@ export function parseEntryDetailed(raw: string): ParseOutcome {
   if (scoped)
     return {
       kind: "ok",
-      entry: { source: "npm", name: scoped[1] as string, version: scoped[2] as string },
+      entry: {
+        source: "npm",
+        name: scoped[1] as string,
+        version: scoped[2] as string,
+        configOrigin: "global",
+      },
     };
 
   const unscoped = UNSCOPED_PINNED.exec(raw);
   if (unscoped)
     return {
       kind: "ok",
-      entry: { source: "npm", name: unscoped[1] as string, version: unscoped[2] as string },
+      entry: {
+        source: "npm",
+        name: unscoped[1] as string,
+        version: unscoped[2] as string,
+        configOrigin: "global",
+      },
     };
 
   return { kind: "drop", reason: "unpinned-or-malformed" };
