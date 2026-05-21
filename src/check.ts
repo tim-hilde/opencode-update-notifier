@@ -63,7 +63,7 @@ export async function runCheck(deps: {
       if (max !== existing.version) {
         grouped.set(key, { entry: { ...entry, configOrigin: mergedOrigin }, version: max });
       } else {
-        existing.entry.configOrigin = mergedOrigin;
+        existing.entry = { ...existing.entry, configOrigin: mergedOrigin };
       }
     }
   }

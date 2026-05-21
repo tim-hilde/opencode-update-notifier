@@ -721,4 +721,30 @@ describe("runCheck", () => {
       },
     ]);
   });
+
+  test("configOrigin merges to tui-global when global entry has higher version", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "shared-pkg", version: "2.0.0", configOrigin: "global" },
+      { source: "npm", name: "shared-pkg", version: "1.0.0", configOrigin: "tui" },
+    ];
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ "shared-pkg": "2.5.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+    expect(results).toEqual([
+      {
+        source: "npm",
+        name: "shared-pkg",
+        pinned: "2.0.0",
+        latest: "2.5.0",
+        configOrigin: "tui-global",
+      },
+    ]);
+  });
 });
