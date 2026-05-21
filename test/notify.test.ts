@@ -140,6 +140,38 @@ describe("formatToastMessage — origin suffix", () => {
       "Plugin update available:\n- tui-git-pkg (git) (TUI): 1.0.0 → 2.0.0",
     );
   });
+
+  test("git-github with dual origin shows (git) (TUI + config)", () => {
+    const updates: UpdateResult[] = [
+      {
+        source: "git-github",
+        name: "dual-pkg",
+        owner: "org",
+        repo: "repo",
+        pinned: "1.0.0",
+        latest: "2.0.0",
+        configOrigin: "tui-global",
+      },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- dual-pkg (git) (TUI + config): 1.0.0 → 2.0.0",
+    );
+  });
+
+  test("global configOrigin (default) shows no extra suffix", () => {
+    const updates: UpdateResult[] = [
+      {
+        source: "npm",
+        name: "default-pkg",
+        pinned: "1.0.0",
+        latest: "2.0.0",
+        configOrigin: "global",
+      },
+    ];
+    expect(formatToastMessage(updates)).toBe(
+      "Plugin update available:\n- default-pkg: 1.0.0 → 2.0.0",
+    );
+  });
 });
 
 describe("notify", () => {
