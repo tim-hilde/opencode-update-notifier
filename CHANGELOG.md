@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.0...v0.3.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* trigger update check on server.connected instead of installation.update-available ([60fca90](https://github.com/tim-hilde/opencode-update-notifier/commit/60fca901f583ba34421a751d7d0398265fbae3e7))
+
 # [0.3.0](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.2.0...v0.3.0) (2026-05-21)
 
 
