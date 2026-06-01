@@ -18,16 +18,16 @@ function makeClient(overrides?: {
   };
 }
 
-async function fireInstallationUpdateAvailable(hooks: {
+async function fireServerConnected(hooks: {
   event?: (input: { event: Event }) => Promise<void>;
 }) {
   await hooks.event?.({
-    event: { type: "installation.update-available", properties: {} } as Event,
+    event: { type: "server.connected", properties: {} } as Event,
   });
 }
 
 describe("OpencodeUpdateNotifier plugin", () => {
-  test("runs check only once on installation.update-available (with 3s delay)", async () => {
+  test("runs check only once on server.connected (with 3s delay)", async () => {
     let checkCount = 0;
 
     const hooks = await OpencodeUpdateNotifier(
@@ -49,16 +49,16 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireInstallationUpdateAvailable(hooks);
-    await fireInstallationUpdateAvailable(hooks);
-    await fireInstallationUpdateAvailable(hooks);
+    await fireServerConnected(hooks);
+    await fireServerConnected(hooks);
+    await fireServerConnected(hooks);
 
     await new Promise((r) => setTimeout(r, 3500));
 
     expect(checkCount).toBe(1);
   });
 
-  test("ignores non-installation.update-available events", async () => {
+  test("ignores non-server.connected events", async () => {
     let checkCount = 0;
     const hooks = await OpencodeUpdateNotifier(
       {
@@ -117,7 +117,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireInstallationUpdateAvailable(hooks);
+    await fireServerConnected(hooks);
 
     await new Promise((r) => setTimeout(r, 3500));
 
@@ -143,7 +143,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireInstallationUpdateAvailable(hooks);
+    await fireServerConnected(hooks);
     await new Promise((r) => setTimeout(r, 100));
 
     expect(true).toBe(true);

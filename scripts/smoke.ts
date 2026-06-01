@@ -56,9 +56,9 @@ const hooks = await plugin(
   {},
 );
 
-// Fire installation.update-available (the event the plugin listens on)
+// Fire server.connected (the event the plugin listens on)
 await hooks.event?.({
-  event: { type: "installation.update-available", properties: {} as never } as Event,
+  event: { type: "server.connected", properties: {} as never } as Event,
 });
 
 // The plugin delays 3s before running the check; wait for it to complete
