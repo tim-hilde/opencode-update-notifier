@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.1...v0.3.2) (2026-06-11)
+
+
+### Bug Fixes
+
+* trigger update check on session.updated instead of server.connected ([a223cf2](https://github.com/tim-hilde/opencode-update-notifier/commit/a223cf278d1457c9f9c898f624b01a793f65585b))
+
 ## [0.3.1](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.0...v0.3.1) (2026-06-01)
 
 

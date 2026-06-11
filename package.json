@@ -1,6 +1,6 @@
 {
   "name": "opencode-update-notifier",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "OpenCode plugin that notifies you when your installed plugins have newer versions on npm",
   "keywords": [
     "opencode",
