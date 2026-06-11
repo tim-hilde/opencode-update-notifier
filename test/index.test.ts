@@ -18,16 +18,16 @@ function makeClient(overrides?: {
   };
 }
 
-async function fireServerConnected(hooks: {
+async function fireSessionUpdated(hooks: {
   event?: (input: { event: Event }) => Promise<void>;
 }) {
   await hooks.event?.({
-    event: { type: "server.connected", properties: {} } as Event,
+    event: { type: "session.updated", properties: { info: {} as never } } as Event,
   });
 }
 
 describe("OpencodeUpdateNotifier plugin", () => {
-  test("runs check only once on server.connected (with 3s delay)", async () => {
+  test("runs check only once on session.updated (with 3s delay)", async () => {
     let checkCount = 0;
 
     const hooks = await OpencodeUpdateNotifier(
@@ -49,16 +49,16 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireServerConnected(hooks);
-    await fireServerConnected(hooks);
-    await fireServerConnected(hooks);
+    await fireSessionUpdated(hooks);
+    await fireSessionUpdated(hooks);
+    await fireSessionUpdated(hooks);
 
     await new Promise((r) => setTimeout(r, 3500));
 
     expect(checkCount).toBe(1);
   });
 
-  test("ignores non-server.connected events", async () => {
+  test("ignores non-session.updated events", async () => {
     let checkCount = 0;
     const hooks = await OpencodeUpdateNotifier(
       {
@@ -80,7 +80,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
     );
 
     await hooks.event?.({
-      event: { type: "session.updated", properties: { info: {} as never } } as Event,
+      event: { type: "server.connected", properties: {} } as Event,
     });
 
     expect(checkCount).toBe(0);
@@ -117,7 +117,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireServerConnected(hooks);
+    await fireSessionUpdated(hooks);
 
     await new Promise((r) => setTimeout(r, 3500));
 
@@ -143,7 +143,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
       },
     );
 
-    await fireServerConnected(hooks);
+    await fireSessionUpdated(hooks);
     await new Promise((r) => setTimeout(r, 100));
 
     expect(true).toBe(true);

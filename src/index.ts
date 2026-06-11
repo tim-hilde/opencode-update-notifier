@@ -165,7 +165,7 @@ export const OpencodeUpdateNotifier: Plugin = async (
 
   return {
     event: async ({ event }: { event: Event }) => {
-      if (event.type !== "server.connected") return;
+      if (event.type !== "session.updated") return;
       if (hasRun) return;
 
       setTimeout(async () => {
