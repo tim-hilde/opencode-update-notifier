@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { getEntry, readCache, setEntry, writeCache } from "../src/cache.ts";
-import type { Cache, FsExists, FsReader, FsRename, FsWriter, HomeDir } from "../src/types.ts";
+import type {
+  Cache,
+  FsExists,
+  FsMkdir,
+  FsReader,
+  FsRename,
+  FsWriter,
+  HomeDir,
+} from "../src/types.ts";
 
 const EMPTY_CACHE: Cache = { version: 2, entries: { npm: {}, "git-github": {} } };
 const TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -294,6 +302,33 @@ describe("writeCache", () => {
     const homeDir: HomeDir = () => "/home/user";
     expect(() =>
       writeCache({ fsWriter, fsRename, homeDir, env: () => undefined }, EMPTY_CACHE),
+    ).not.toThrow();
+  });
+
+  test("creates the parent directory (recursively) before writing", () => {
+    const mkdirs: string[] = [];
+    const writes: string[] = [];
+    const fsMkdir: FsMkdir = (path) => mkdirs.push(path);
+    const fsWriter: FsWriter = (path) => writes.push(path);
+    const fsRename: FsRename = () => {};
+    const homeDir: HomeDir = () => "/home/user";
+
+    writeCache({ fsMkdir, fsWriter, fsRename, homeDir, env: () => undefined }, EMPTY_CACHE);
+
+    expect(mkdirs).toEqual(["/home/user/.cache/opencode-update-notifier"]);
+    // directory must be created before the file is written
+    expect(writes).toHaveLength(1);
+  });
+
+  test("swallows mkdir errors without throwing", () => {
+    const fsMkdir: FsMkdir = () => {
+      throw new Error("EACCES");
+    };
+    const fsWriter: FsWriter = () => {};
+    const fsRename: FsRename = () => {};
+    const homeDir: HomeDir = () => "/home/user";
+    expect(() =>
+      writeCache({ fsMkdir, fsWriter, fsRename, homeDir, env: () => undefined }, EMPTY_CACHE),
     ).not.toThrow();
   });
 });

@@ -60,6 +60,9 @@ export type FsWriter = (path: string, content: string) => void;
 /** Renames (atomically moves) a file. Throws on error. */
 export type FsRename = (from: string, to: string) => void;
 
+/** Creates a directory, including any missing parents. Throws on error. */
+export type FsMkdir = (path: string) => void;
+
 /** Returns true if a path exists on the filesystem. */
 export type FsExists = (path: string) => boolean;
 

@@ -1,4 +1,9 @@
-import { gt as semverGt, maxSatisfying as semverMaxSatisfying } from "semver";
+import {
+  coerce as semverCoerce,
+  gt as semverGt,
+  maxSatisfying as semverMaxSatisfying,
+  valid as semverValid,
+} from "semver";
 import { getEntry, setEntry } from "./cache.js";
 import type { Cache, ConfigOrigin, Logger, ParsedEntry, UpdateResult } from "./types.ts";
 
@@ -117,13 +122,36 @@ export async function runCheck(deps: {
 
   if (cacheChanged) deps.writeCache(cache);
 
-  // Compare pinned vs latest
+  // Compare pinned vs latest. npm pins may be partial (e.g. "3.9" or "3"),
+  // which are not valid semver and would make semverGt throw — so coerce the
+  // pinned version first. Guard each comparison so a single unparseable entry
+  // can never abort the whole batch and suppress every toast.
   const updates: UpdateResult[] = [];
   for (const [gkey, { entry, version: pinned }] of grouped) {
     const latest = cachedLatest.get(gkey);
     if (!latest) continue;
-    if (semverGt(latest, pinned)) {
-      updates.push(toUpdateResult(entry, pinned, latest));
+    const pinnedNorm = semverValid(pinned) ?? semverCoerce(pinned)?.version ?? null;
+    if (pinnedNorm === null) {
+      void deps.log({
+        service: "opencode-update-notifier",
+        level: "warn",
+        message: "Skipping entry with unparseable pinned version",
+        extra: { entry: entry.name, pinned },
+      });
+      continue;
+    }
+    try {
+      // Report the raw pinned string the user wrote, not the coerced form.
+      if (semverGt(latest, pinnedNorm)) {
+        updates.push(toUpdateResult(entry, pinned, latest));
+      }
+    } catch (err) {
+      void deps.log({
+        service: "opencode-update-notifier",
+        level: "warn",
+        message: "Skipping entry with uncomparable versions",
+        extra: { entry: entry.name, pinned, latest, error: String(err) },
+      });
     }
   }
 

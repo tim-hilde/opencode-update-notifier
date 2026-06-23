@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import type { Config, Plugin, PluginInput, PluginOptions } from "@opencode-ai/plugin";
 import type { Event } from "@opencode-ai/sdk";
@@ -62,6 +62,9 @@ export const OpencodeUpdateNotifier: Plugin = async (
     const env = (k: string) => process.env[k];
     const fsReader = (p: string) => readFileSync(p, "utf-8");
     const fsExists = existsSync;
+    const fsMkdir = (p: string) => {
+      mkdirSync(p, { recursive: true });
+    };
     const homeDir = () => os.homedir();
 
     // Collect all config sources
@@ -133,12 +136,14 @@ export const OpencodeUpdateNotifier: Plugin = async (
           fsExists,
           homeDir,
           env,
+          fsMkdir,
           fsWriter: (p, content) => writeFileSync(p, content, "utf-8"),
           fsRename: (from, to) => renameSync(from, to),
         }),
       writeCache: (cache) =>
         writeCache(
           {
+            fsMkdir,
             fsWriter: (p, content) => writeFileSync(p, content, "utf-8"),
             fsRename: (from, to) => renameSync(from, to),
             homeDir,

@@ -748,3 +748,103 @@ describe("runCheck", () => {
     ]);
   });
 });
+
+describe("runCheck — partial / malformed pinned versions", () => {
+  test("partial-version npm pin (e.g. '3.9') is compared via coercion, not thrown", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "quota", version: "3.9", configOrigin: "global" },
+    ];
+
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ quota: "3.10.1" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    // pinned is reported as the raw string the user wrote, not the coerced form
+    expect(results).toEqual([
+      { source: "npm", name: "quota", pinned: "3.9", latest: "3.10.1", configOrigin: "global" },
+    ]);
+  });
+
+  test("major-only npm pin (e.g. '3') is coerced and compared", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "pkg", version: "3", configOrigin: "global" },
+    ];
+
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ pkg: "4.0.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    expect(results).toEqual([
+      { source: "npm", name: "pkg", pinned: "3", latest: "4.0.0", configOrigin: "global" },
+    ]);
+  });
+
+  test("one unparseable pinned version does not abort the whole batch", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "bad", version: "not-a-version", configOrigin: "global" },
+      { source: "npm", name: "good", version: "1.0.0", configOrigin: "global" },
+    ];
+
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ bad: "9.9.9", good: "2.0.0" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    // The unparseable entry is skipped; the valid update is still reported.
+    expect(results).toEqual([
+      { source: "npm", name: "good", pinned: "1.0.0", latest: "2.0.0", configOrigin: "global" },
+    ]);
+  });
+
+  test("partial-version pin alongside valid updates reports all of them", async () => {
+    const entries: ParsedEntry[] = [
+      { source: "npm", name: "quota", version: "3.9", configOrigin: "global" },
+      { source: "npm", name: "insights", version: "1.1.3", configOrigin: "global" },
+    ];
+
+    const results = await runCheck({
+      entries,
+      fetchLatest: makeNpmFetcher({ quota: "3.10.1", insights: "1.3.1" }),
+      fetchLatestGithubTag: makeGithubFetcher({}),
+      readCache: () => emptyCache(),
+      writeCache: () => {},
+      now: NOW,
+      ttlMs: TTL_MS,
+      log: noopLog,
+    });
+
+    expect(results).toEqual(
+      expect.arrayContaining([
+        { source: "npm", name: "quota", pinned: "3.9", latest: "3.10.1", configOrigin: "global" },
+        {
+          source: "npm",
+          name: "insights",
+          pinned: "1.1.3",
+          latest: "1.3.1",
+          configOrigin: "global",
+        },
+      ]),
+    );
+    expect(results).toHaveLength(2);
+  });
+});

@@ -1,5 +1,14 @@
 import path from "node:path";
-import type { Cache, EnvReader, FsExists, FsReader, FsRename, FsWriter, HomeDir } from "./types.ts";
+import type {
+  Cache,
+  EnvReader,
+  FsExists,
+  FsMkdir,
+  FsReader,
+  FsRename,
+  FsWriter,
+  HomeDir,
+} from "./types.ts";
 
 const CACHE_REL = "opencode-update-notifier/cache.json";
 export const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -24,6 +33,7 @@ export function readCache(deps: {
    */
   fsWriter?: FsWriter;
   fsRename?: FsRename;
+  fsMkdir?: FsMkdir;
 }): Cache {
   const p = cachePath(deps.env, deps.homeDir);
   let parsed: unknown;
@@ -50,6 +60,7 @@ export function readCache(deps: {
           fsRename: deps.fsRename,
           homeDir: deps.homeDir,
           env: deps.env,
+          fsMkdir: deps.fsMkdir,
         },
         EMPTY_CACHE,
       );
@@ -111,11 +122,18 @@ export function writeCache(
     fsRename: FsRename;
     homeDir: HomeDir;
     env: EnvReader;
+    /**
+     * Optional. Creates the cache directory (recursively) before writing.
+     * Without it the first-ever write fails with ENOENT (the ~/.cache
+     * subdirectory does not exist yet) and the cache never persists.
+     */
+    fsMkdir?: FsMkdir | undefined;
   },
   cache: Cache,
 ): void {
   try {
     const target = cachePath(deps.env, deps.homeDir);
+    deps.fsMkdir?.(path.dirname(target));
     const tmp = `${target}.tmp`;
     deps.fsWriter(tmp, JSON.stringify(cache, null, 2));
     deps.fsRename(tmp, target);
