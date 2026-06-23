@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.2...v0.3.3) (2026-06-23)
+
+
+### Bug Fixes
+
+* handle partial-version npm pins and persist cache ([f30502a](https://github.com/tim-hilde/opencode-update-notifier/commit/f30502a98989a42693d16bb57e6afd4545d0ebf1))
+
 ## [0.3.2](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.1...v0.3.2) (2026-06-11)
 
 
