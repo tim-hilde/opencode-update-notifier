@@ -27,11 +27,16 @@ export function loadPluginEntries(deps: {
       }
 
       if (typeof parsed !== "object" || parsed === null) continue;
-      const plugin = (parsed as Record<string, unknown>).plugin;
-      if (!Array.isArray(plugin)) continue;
+      const config = parsed as Record<string, unknown>;
 
-      for (const entry of plugin) {
-        if (typeof entry === "string") all.push(entry);
+      // OpenCode 1 uses `plugin`; OpenCode 2 uses `plugins` with string or
+      // { package, options } entries.
+      for (const list of [config.plugin, config.plugins]) {
+        if (!Array.isArray(list)) continue;
+        for (const entry of list) {
+          if (typeof entry === "string") all.push(entry);
+          else if (typeof entry?.package === "string") all.push(entry.package);
+        }
       }
     } catch (err) {
       void deps.log({

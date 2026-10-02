@@ -513,3 +513,13 @@ describe("config hook", () => {
     expect(cfg.command?.["check-updates"]?.template).toBe("");
   });
 });
+
+describe("default export", () => {
+  test("serves OpenCode 1 via server() and OpenCode 2 via setup()", async () => {
+    const mod = await import("../src/index.ts");
+    const plugin = mod.default as { id?: unknown; server?: unknown; setup?: unknown };
+    expect(plugin.id).toBe("opencode-update-notifier");
+    expect(plugin.server).toBe(OpencodeUpdateNotifier);
+    expect(typeof plugin.setup).toBe("function");
+  });
+});

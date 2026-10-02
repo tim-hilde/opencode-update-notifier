@@ -36,6 +36,17 @@ Add `opencode-update-notifier` to your OpenCode config:
 }
 ```
 
+### OpenCode 2
+
+The same package works with OpenCode 2. List it under `plugins`; the check runs in the terminal UI when it starts, and `/check-updates` forces a fresh check. OpenCode 2's own update check skips exactly pinned versions, so this plugin still covers them. Plugins from `cli.json` are checked too.
+
+```jsonc
+// ~/.config/opencode/opencode.json
+{
+  "plugins": ["opencode-update-notifier@0.3.3"]
+}
+```
+
 ## Cache
 
 Results are cached at `~/.cache/opencode-update-notifier/cache.json` (or `$XDG_CACHE_HOME/opencode-update-notifier/cache.json`).

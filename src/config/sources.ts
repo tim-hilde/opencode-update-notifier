@@ -110,7 +110,8 @@ export function getTuiConfigSources(deps: {
   const configBase = xdg ?? path.join(deps.homeDir(), ".config");
   const dir = path.join(configBase, "opencode");
   const results: ConfigSource[] = [];
-  for (const name of ["tui.json", "tui.jsonc"]) {
+  // cli.json is OpenCode 2's replacement for tui.json.
+  for (const name of ["tui.json", "tui.jsonc", "cli.json", "cli.jsonc"]) {
     const s = readIfExists(deps.fsReader, deps.fsExists, path.join(dir, name));
     if (s) results.push(s);
   }

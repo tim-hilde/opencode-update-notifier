@@ -23,6 +23,11 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./tui": {
+      "import": "./dist/tui.js",
+      "types": "./dist/tui.d.ts",
+      "default": "./dist/tui.js"
     }
   },
   "files": [
@@ -49,6 +54,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@opencode-ai/plugin": "^1.14.31",
+    "@opencode/plugin": "^2.0.22",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",

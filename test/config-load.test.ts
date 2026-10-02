@@ -10,6 +10,26 @@ describe("loadPluginEntries", () => {
     expect(result).toEqual(["@scope/pkg@1.0.0", "tool@2.0.0"]);
   });
 
+  test("reads the OpenCode 2 plugins key with string and object entries", () => {
+    const sources = [
+      {
+        path: "opencode.json",
+        content:
+          '{"plugins": ["pkg-a@1.0.0", {"package": "@scope/pkg-b@2.0.0", "options": {"x": 1}}, {"options": {}}]}',
+      },
+    ];
+    const result = loadPluginEntries({ sources, log: async () => {} });
+    expect(result).toEqual(["pkg-a@1.0.0", "@scope/pkg-b@2.0.0"]);
+  });
+
+  test("reads both plugin and plugins keys from one source", () => {
+    const sources = [
+      { path: "opencode.json", content: '{"plugin": ["pkg-a@1.0.0"], "plugins": ["pkg-b@2.0.0"]}' },
+    ];
+    const result = loadPluginEntries({ sources, log: async () => {} });
+    expect(result).toEqual(["pkg-a@1.0.0", "pkg-b@2.0.0"]);
+  });
+
   test("aggregates entries from multiple sources", () => {
     const sources = [
       { path: "global.json", content: '{"plugin": ["pkg-a@1.0.0"]}' },

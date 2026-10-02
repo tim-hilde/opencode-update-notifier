@@ -203,6 +203,23 @@ describe("getManagedConfigSources", () => {
 
 // --- getTuiConfigSources ---
 describe("getTuiConfigSources", () => {
+  test("includes the OpenCode 2 cli.json next to tui.json", () => {
+    const { fsReader, fsExists } = makeFs({
+      "/home/user/.config/opencode/tui.json": '{"plugin":["a@1.0.0"]}',
+      "/home/user/.config/opencode/cli.json": '{"plugins":["b@1.0.0"]}',
+    });
+    const sources = getTuiConfigSources({
+      fsReader,
+      fsExists,
+      homeDir: () => "/home/user",
+      env: () => undefined,
+    });
+    expect(sources.map((s) => s.path)).toEqual([
+      "/home/user/.config/opencode/tui.json",
+      "/home/user/.config/opencode/cli.json",
+    ]);
+  });
+
   test("returns tui.json source when only .json exists", () => {
     const { fsReader, fsExists } = makeFs({
       "/home/user/.config/opencode/tui.json": '{"plugin":["a@1.0.0"]}',
