@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.3...v0.4.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* run the startup update check on plugin.added ([9f6a578](https://github.com/tim-hilde/opencode-update-notifier/commit/9f6a5782641dbaf8ef8a499e548465e476daeac4))
+
+
+### Features
+
+* support OpenCode 2 ([8f244c2](https://github.com/tim-hilde/opencode-update-notifier/commit/8f244c26231881fd5cd0523d685af41eee3bd7f1))
+
 ## [0.3.3](https://github.com/tim-hilde/opencode-update-notifier/compare/v0.3.2...v0.3.3) (2026-06-23)
 
 

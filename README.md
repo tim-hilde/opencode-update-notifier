@@ -31,7 +31,7 @@ Add `opencode-update-notifier` to your OpenCode config:
 // ~/.config/opencode/opencode.json
 {
   "plugin": [
-    "opencode-update-notifier@0.3.3"
+    "opencode-update-notifier@0.4.0"
   ]
 }
 ```
@@ -43,7 +43,7 @@ The same package works with OpenCode 2. List it under `plugins`; the check runs 
 ```jsonc
 // ~/.config/opencode/opencode.json
 {
-  "plugins": ["opencode-update-notifier@0.3.3"]
+  "plugins": ["opencode-update-notifier@0.4.0"]
 }
 ```
 
