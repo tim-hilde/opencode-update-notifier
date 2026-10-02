@@ -26,6 +26,13 @@ async function fireSessionUpdated(hooks: {
   });
 }
 
+async function fireEvent(
+  hooks: { event?: (input: { event: Event }) => Promise<void> },
+  type: string,
+) {
+  await hooks.event?.({ event: { type, properties: {} } as unknown as Event });
+}
+
 describe("OpencodeUpdateNotifier plugin", () => {
   test("runs check only once on session.updated (with 3s delay)", async () => {
     let checkCount = 0;
@@ -58,7 +65,7 @@ describe("OpencodeUpdateNotifier plugin", () => {
     expect(checkCount).toBe(1);
   });
 
-  test("ignores non-session.updated events", async () => {
+  test("ignores events outside the startup trigger set", async () => {
     let checkCount = 0;
     const hooks = await OpencodeUpdateNotifier(
       {
@@ -76,14 +83,76 @@ describe("OpencodeUpdateNotifier plugin", () => {
           checkCount++;
           return [];
         },
+        _startupDelayMs: 10,
       },
     );
 
-    await hooks.event?.({
-      event: { type: "server.connected", properties: {} } as Event,
-    });
+    // server.connected does not reach plugin handlers in practice and is not a
+    // trigger; message.part.updated is high-frequency noise we must ignore.
+    await fireEvent(hooks, "server.connected");
+    await fireEvent(hooks, "message.part.updated");
+    await new Promise((r) => setTimeout(r, 50));
 
     expect(checkCount).toBe(0);
+  });
+
+  test("runs check on plugin.added (earliest startup trigger)", async () => {
+    let checkCount = 0;
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient() as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async () => {
+          checkCount++;
+          return [];
+        },
+        _startupDelayMs: 10,
+      },
+    );
+
+    await fireEvent(hooks, "plugin.added");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(checkCount).toBe(1);
+  });
+
+  test("schedules the check only once across mixed startup events", async () => {
+    let checkCount = 0;
+    const hooks = await OpencodeUpdateNotifier(
+      {
+        client: makeClient() as never,
+        project: {} as never,
+        directory: "/tmp",
+        worktree: "/tmp",
+        experimental_workspace: { register: () => {} },
+        serverUrl: new URL("http://localhost:1234"),
+        $: {} as never,
+      },
+      {},
+      {
+        _runCheck: async () => {
+          checkCount++;
+          return [];
+        },
+        _startupDelayMs: 10,
+      },
+    );
+
+    // plugin.added arrives first, then session.updated later — only one run.
+    await fireEvent(hooks, "plugin.added");
+    await fireSessionUpdated(hooks);
+    await fireEvent(hooks, "plugin.added");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(checkCount).toBe(1);
   });
 
   test("calls showToast when runCheck returns updates", async () => {
